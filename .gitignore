@@ -1,0 +1,17 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+!.env.local
+.idea/
+.vscode/
+*.sublime-project
+.env
+.env.local
+.env.development
+.env.test
+.env.production

@@ -1,0 +1,782 @@
+{
+  "id": "hyundai-grand-i10-nios-1.0l-turbo-petrol",
+  "brand": "Hyundai",
+  "model": "Grand i10 Nios",
+  "powertrain": {
+    "engine": "1.0L Turbo Petrol",
+    "transmission": "",
+    "fuelType": "Petrol",
+    "drivetrain": ""
+  },
+  "serviceSchedule": [
+    {
+      "interval": {
+        "label": "1 month",
+        "km": 1500,
+        "months": 1
+      },
+      "labourCost": 0,
+      "partsConsumablesCost": 0,
+      "totalCost": 0,
+      "items": []
+    },
+    {
+      "interval": {
+        "label": "1 year",
+        "km": 10000,
+        "months": 12
+      },
+      "labourCost": 0,
+      "partsConsumablesCost": 1871,
+      "totalCost": 1871,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "2 year",
+        "km": 20000,
+        "months": 24
+      },
+      "labourCost": 0,
+      "partsConsumablesCost": 2310,
+      "totalCost": 2310,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Air filter",
+          "action": "Replace",
+          "pricePerUnit": 222,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 222,
+          "required": true
+        },
+        {
+          "service": "Cabin filter",
+          "action": "Replace",
+          "pricePerUnit": 217,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 217,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "3 year",
+        "km": 30000,
+        "months": 36
+      },
+      "labourCost": 3242,
+      "partsConsumablesCost": 2351,
+      "totalCost": 5593,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Brake fluid",
+          "action": "Replace",
+          "pricePerUnit": 480,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 480,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "4 year",
+        "km": 40000,
+        "months": 48
+      },
+      "labourCost": 3242,
+      "partsConsumablesCost": 2310,
+      "totalCost": 5552,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Air filter",
+          "action": "Replace",
+          "pricePerUnit": 222,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 222,
+          "required": true
+        },
+        {
+          "service": "Cabin filter",
+          "action": "Replace",
+          "pricePerUnit": 217,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 217,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "5 year",
+        "km": 50000,
+        "months": 60
+      },
+      "labourCost": 3242,
+      "partsConsumablesCost": 2551,
+      "totalCost": 5793,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Coolant",
+          "action": "Replace",
+          "pricePerUnit": 680,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 680,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "6 year",
+        "km": 60000,
+        "months": 72
+      },
+      "labourCost": 3242,
+      "partsConsumablesCost": 4578,
+      "totalCost": 7820,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Air filter",
+          "action": "Replace",
+          "pricePerUnit": 222,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 222,
+          "required": true
+        },
+        {
+          "service": "Cabin filter",
+          "action": "Replace",
+          "pricePerUnit": 217,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 217,
+          "required": true
+        },
+        {
+          "service": "Brake fluid",
+          "action": "Replace",
+          "pricePerUnit": 480,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 480,
+          "required": true
+        },
+        {
+          "service": "Fuel filter",
+          "action": "Replace",
+          "pricePerUnit": 440,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 440,
+          "required": true
+        },
+        {
+          "service": "Spark plug",
+          "action": "Replace",
+          "pricePerUnit": 1348,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 1348,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "7 year",
+        "km": 70000,
+        "months": 84
+      },
+      "labourCost": 3242,
+      "partsConsumablesCost": 2551,
+      "totalCost": 5793,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Coolant",
+          "action": "Replace",
+          "pricePerUnit": 680,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 680,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "8 year",
+        "km": 80000,
+        "months": 96
+      },
+      "labourCost": 3242,
+      "partsConsumablesCost": 2310,
+      "totalCost": 5552,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Air filter",
+          "action": "Replace",
+          "pricePerUnit": 222,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 222,
+          "required": true
+        },
+        {
+          "service": "Cabin filter",
+          "action": "Replace",
+          "pricePerUnit": 217,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 217,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "9 year",
+        "km": 90000,
+        "months": 108
+      },
+      "labourCost": 3242,
+      "partsConsumablesCost": 3031,
+      "totalCost": 6273,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Brake fluid",
+          "action": "Replace",
+          "pricePerUnit": 480,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 480,
+          "required": true
+        },
+        {
+          "service": "Coolant",
+          "action": "Replace",
+          "pricePerUnit": 680,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 680,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "10 year",
+        "km": 100000,
+        "months": 120
+      },
+      "labourCost": 3242,
+      "partsConsumablesCost": 2310,
+      "totalCost": 5552,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Air filter",
+          "action": "Replace",
+          "pricePerUnit": 222,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 222,
+          "required": true
+        },
+        {
+          "service": "Cabin filter",
+          "action": "Replace",
+          "pricePerUnit": 217,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 217,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "11 year",
+        "km": 110000,
+        "months": 132
+      },
+      "labourCost": 3242,
+      "partsConsumablesCost": 2551,
+      "totalCost": 5793,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Coolant",
+          "action": "Replace",
+          "pricePerUnit": 680,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 680,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "12 year",
+        "km": 120000,
+        "months": 144
+      },
+      "labourCost": 3242,
+      "partsConsumablesCost": 4578,
+      "totalCost": 7820,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Air filter",
+          "action": "Replace",
+          "pricePerUnit": 222,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 222,
+          "required": true
+        },
+        {
+          "service": "Cabin filter",
+          "action": "Replace",
+          "pricePerUnit": 217,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 217,
+          "required": true
+        },
+        {
+          "service": "Brake fluid",
+          "action": "Replace",
+          "pricePerUnit": 480,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 480,
+          "required": true
+        },
+        {
+          "service": "Fuel filter",
+          "action": "Replace",
+          "pricePerUnit": 440,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 440,
+          "required": true
+        },
+        {
+          "service": "Spark plug",
+          "action": "Replace",
+          "pricePerUnit": 1348,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 1348,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "13 year",
+        "km": 130000,
+        "months": 156
+      },
+      "labourCost": 3242,
+      "partsConsumablesCost": 2551,
+      "totalCost": 5793,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Coolant",
+          "action": "Replace",
+          "pricePerUnit": 680,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 680,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "14 year",
+        "km": 140000,
+        "months": 168
+      },
+      "labourCost": 3242,
+      "partsConsumablesCost": 2310,
+      "totalCost": 5552,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Air filter",
+          "action": "Replace",
+          "pricePerUnit": 222,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 222,
+          "required": true
+        },
+        {
+          "service": "Cabin filter",
+          "action": "Replace",
+          "pricePerUnit": 217,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 217,
+          "required": true
+        }
+      ]
+    },
+    {
+      "interval": {
+        "label": "15 year",
+        "km": 150000,
+        "months": 180
+      },
+      "labourCost": 3242,
+      "partsConsumablesCost": 3031,
+      "totalCost": 6273,
+      "items": [
+        {
+          "service": "Oil (0W-30)",
+          "action": "Replace",
+          "pricePerUnit": 490,
+          "requiredQuantity": 3.6,
+          "unit": "L",
+          "total": 1764,
+          "required": true
+        },
+        {
+          "service": "Oil filter",
+          "action": "Replace",
+          "pricePerUnit": 107,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 107,
+          "required": true
+        },
+        {
+          "service": "Brake fluid",
+          "action": "Replace",
+          "pricePerUnit": 480,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 480,
+          "required": true
+        },
+        {
+          "service": "Coolant",
+          "action": "Replace",
+          "pricePerUnit": 680,
+          "requiredQuantity": 1,
+          "unit": "",
+          "total": 680,
+          "required": true
+        }
+      ]
+    }
+  ],
+  "ownershipSummary": [
+    {
+      "title": "3 year",
+      "years": 3,
+      "km": 30000,
+      "totalCost": 9774,
+      "averageCostPerKm": 0.33,
+      "averageCostPerMonth": 272,
+      "description": ""
+    },
+    {
+      "title": "5 year",
+      "years": 5,
+      "km": 50000,
+      "totalCost": 21119,
+      "averageCostPerKm": 0.42,
+      "averageCostPerMonth": 352,
+      "description": ""
+    },
+    {
+      "title": "7 year",
+      "years": 7,
+      "km": 70000,
+      "totalCost": 34732,
+      "averageCostPerKm": 0.50,
+      "averageCostPerMonth": 413,
+      "description": ""
+    },
+    {
+      "title": "10 year",
+      "years": 10,
+      "km": 100000,
+      "totalCost": 52109,
+      "averageCostPerKm": 0.52,
+      "averageCostPerMonth": 434,
+      "description": ""
+    },
+    {
+      "title": "15 year",
+      "years": 15,
+      "km": 150000,
+      "totalCost": 81174,
+      "averageCostPerKm": 0.54,
+      "averageCostPerMonth": 451,
+      "description": ""
+    }
+  ]
+}

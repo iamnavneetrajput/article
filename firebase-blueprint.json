@@ -1,0 +1,113 @@
+{
+  "entities": {
+    "Brand": {
+      "title": "Brand",
+      "description": "An automobile manufacturer.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "country": { "type": "string" },
+        "logoUrl": { "type": "string", "format": "uri" },
+        "lastUpdated": { "type": "object" }
+      },
+      "required": ["name"]
+    },
+    "Model": {
+      "title": "Model",
+      "description": "A specific car model.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "brandId": { "type": "string" }
+      },
+      "required": ["name", "brandId"]
+    },
+    "Powertrain": {
+      "title": "Powertrain",
+      "description": "Engine and transmission configuration.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "modelId": { "type": "string" },
+        "engine": { "type": "string" },
+        "fuelType": { "type": "string" },
+        "transmission": { "type": "string" }
+      },
+      "required": ["name", "modelId"]
+    },
+    "ServiceInterval": {
+      "title": "Service Interval",
+      "description": "A specific maintenance schedule interval.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "powertrainId": { "type": "string" },
+        "months": { "type": "number" },
+        "kilometers": { "type": "number" },
+        "laborCost": { "type": "number" },
+        "partsCost": { "type": "number" },
+        "totalCost": { "type": "number" }
+      }
+    },
+    "ImportLog": {
+      "title": "Import Log",
+      "description": "Record of a JSON data import operation.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "timestamp": { "type": "object" },
+        "fileName": { "type": "string" },
+        "mode": { "type": "string" },
+        "results": {
+          "type": "object",
+          "properties": {
+            "brands": { "type": "number" },
+            "models": { "type": "number" },
+            "powertrains": { "type": "number" },
+            "intervals": { "type": "number" }
+          }
+        },
+        "errorCount": { "type": "number" }
+      },
+      "required": ["userId", "timestamp", "fileName"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "object" },
+        "lastLogin": { "type": "object" }
+      },
+      "required": ["uid", "email"]
+    },
+    "AccessRequest": {
+      "title": "Access Request",
+      "description": "User request for administrator access.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userName": { "type": "string" },
+        "timestamp": { "type": "object" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "message": { "type": "string" }
+      },
+      "required": ["userId", "userEmail", "status"]
+    }
+  },
+  "firestore": {
+    "/brands": { "schema": "Brand", "description": "Collection of automobile brands" },
+    "/models": { "schema": "Model", "description": "Collection of car models" },
+    "/powertrains": { "schema": "Powertrain", "description": "Collection of powertrain options" },
+    "/serviceIntervals": { "schema": "ServiceInterval", "description": "Collection of maintenance intervals" },
+    "/importLogs": { "schema": "ImportLog", "description": "Log of data import operations" },
+    "/users": { "schema": "User", "description": "User profiles" },
+    "/accessRequests": { "schema": "AccessRequest", "description": "Requests for admin access" }
+  }
+}

@@ -1,0 +1,119 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email.lower() == 'navneet709123@gmail.com' && (request.auth.token.email_verified == true || request.auth.token.email_verified == null)) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validations ---
+    function isValidBrand(data) {
+      return data.keys().hasAll(['name', 'searchName', 'updatedAt']) &&
+             data.name is string && data.name.size() > 0;
+    }
+
+    function isValidModel(data) {
+      return data.keys().hasAll(['name', 'searchName', 'brandId', 'brandName', 'updatedAt']) &&
+             data.name is string && data.brandId is string;
+    }
+
+    function isValidPowertrain(data) {
+      return data.keys().hasAll(['name', 'searchName', 'modelId', 'updatedAt']) &&
+             data.name is string && data.modelId is string;
+    }
+
+    function isValidInterval(data) {
+      return data.keys().hasAll(['powertrainId', 'kilometers', 'updatedAt']) &&
+             data.powertrainId is string && (data.kilometers is number || data.kilometers is int);
+    }
+
+    // --- Rules ---
+
+    match /admins/{adminId} {
+      allow read: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /brands/{brandId} {
+      allow get: if isSignedIn() && isValidId(brandId);
+      allow list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /models/{modelId} {
+      allow get: if isSignedIn() && isValidId(modelId);
+      allow list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /powertrains/{powertrainId} {
+      allow get: if isSignedIn() && isValidId(powertrainId);
+      allow list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /serviceIntervals/{intervalId} {
+      allow get: if isSignedIn() && isValidId(intervalId);
+      allow list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /articles/{articleId} {
+      allow get: if isSignedIn() && isValidId(articleId);
+      allow list: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /importLogs/{logId} {
+      allow read, create: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if isAdmin();
+    }
+
+    match /accessRequests/{requestId} {
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}
