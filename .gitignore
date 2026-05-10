@@ -15,3 +15,5 @@ coverage/
 .env.development
 .env.test
 .env.production
+.gitignore
+!.gitignore
