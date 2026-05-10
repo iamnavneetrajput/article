@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, getDocs, query, orderBy, limit, Timestamp } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, limit, Timestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { cn } from "../lib/utils";
 import { handleFirestoreError, OperationType } from "../lib/errorHandling";
@@ -49,79 +49,85 @@ export default function Dashboard() {
   const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
-    async function loadStats() {
-      try {
-        const [brandSnap, modelSnap, articleSnap, intervalSnap] = await Promise.all([
-          getDocs(collection(db, "brands")),
-          getDocs(collection(db, "models")),
-          getDocs(collection(db, "articles")),
-          getDocs(collection(db, "serviceIntervals"))
-        ]);
+    // Real-time listeners for all stats
+    const unsubBrands = onSnapshot(collection(db, "brands"), (snap) => {
+      setStats(prev => ({ ...prev, brands: snap.size }));
+    });
+    
+    const unsubModels = onSnapshot(collection(db, "models"), (snap) => {
+      setStats(prev => ({ ...prev, models: snap.size }));
+    });
 
-        setStats({
-          brands: brandSnap.size,
-          models: modelSnap.size,
-          articles: articleSnap.size,
-          intervals: intervalSnap.size
-        });
+    const unsubArticles = onSnapshot(collection(db, "articles"), (snap) => {
+      setStats(prev => ({ ...prev, articles: snap.size }));
+    });
 
-        // Fetch logs separately
-        try {
-          const logSnap = await getDocs(query(collection(db, "importLogs"), orderBy("timestamp", "desc"), limit(20)));
-          const fetchedLogs = logSnap.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })) as ImportLogSummary[];
-          setLogs(fetchedLogs);
+    const unsubIntervals = onSnapshot(collection(db, "serviceIntervals"), (snap) => {
+      setStats(prev => ({ ...prev, intervals: snap.size }));
+    });
 
-          // Process chart data
-          const last7Days = Array.from({ length: 7 }, (_, i) => {
-            const date = new Date();
-            date.setDate(date.getDate() - (6 - i));
-            return {
-              name: format(date, "EEE"),
-              fullDate: format(date, "yyyy-MM-dd"),
-              count: 0
-            };
-          });
+    // Logs listener
+    const q = query(collection(db, "importLogs"), orderBy("timestamp", "desc"), limit(20));
+    const unsubLogs = onSnapshot(q, (snapshot) => {
+      const fetchedLogs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as ImportLogSummary[];
+      setLogs(fetchedLogs);
 
-          fetchedLogs.forEach(log => {
-            if (!log.timestamp) return;
-            const logDate = log.timestamp.toDate();
-            const dateStr = format(logDate, "yyyy-MM-dd");
-            const dayData = last7Days.find(d => d.fullDate === dateStr);
-            if (dayData) {
-              dayData.count += log.results.intervals;
-            }
-          });
-          setChartData(last7Days);
-        } catch (logError) {
-          console.warn("Could not load logs - user likely not admin", logError);
-          // Set empty chart data
-          const emptyDays = Array.from({ length: 7 }, (_, i) => {
-            const date = new Date();
-            date.setDate(date.getDate() - (6 - i));
-            return { name: format(date, "EEE"), count: 0 };
-          });
-          setChartData(emptyDays);
+      // Process chart data
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (6 - i));
+        return {
+          name: format(date, "EEE"),
+          fullDate: format(date, "yyyy-MM-dd"),
+          count: 0
+        };
+      });
+
+      fetchedLogs.forEach(log => {
+        if (!log.timestamp) return;
+        const logDate = log.timestamp.toDate();
+        const dateStr = format(logDate, "yyyy-MM-dd");
+        const dayData = last7Days.find(d => d.fullDate === dateStr);
+        if (dayData) {
+          dayData.count += log.results.intervals;
         }
+      });
+      setChartData(last7Days);
+    }, (error) => {
+      console.warn("Could not load logs - user likely not admin", error);
+      // Set empty chart data if error
+      const emptyDays = Array.from({ length: 7 }, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (6 - i));
+        return { name: format(date, "EEE"), count: 0 };
+      });
+      setChartData(emptyDays);
+    });
 
-      } catch (error) {
-        handleFirestoreError(error, OperationType.GET, "dashboard_stats");
-      }
-    }
-    loadStats();
+    return () => {
+      unsubBrands();
+      unsubModels();
+      unsubArticles();
+      unsubIntervals();
+      unsubLogs();
+    };
   }, []);
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <header className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tighter uppercase">Dashboard</h2>
-          <p className="tech-header text-slate-500">Insights and publication statistics</p>
+          <h2 className="text-3xl font-bold tracking-tighter uppercase flex items-center gap-3">
+             <LayoutDashboard className="w-8 h-8 text-blue-600" />
+             Dashboard
+          </h2>
+          <p className="tech-header text-slate-500 italic mt-1">Enterprise insights and fleet statistics.</p>
         </div>
         
-        <div className="flex bg-slate-200/50 p-1 rounded-lg">
+        <div className="flex bg-slate-200/50 p-1 rounded-xl w-full sm:w-auto">
           <button 
             onClick={() => setActiveTab("overview")}
             className={cn(
@@ -152,25 +158,25 @@ export default function Dashboard() {
             exit={{ opacity: 0, y: -10 }}
             className="space-y-8"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: "Total Brands", value: stats.brands, icon: Car, color: "text-slate-900" },
-                { label: "Vehicle Models", value: stats.models, icon: Database, color: "text-blue-600" },
-                { label: "Service Intervals", value: stats.intervals, icon: Activity, color: "text-green-600" },
-                { label: "Articles Created", value: stats.articles, icon: FileText, color: "text-slate-900" },
+                { label: "Brands", value: stats.brands, icon: Car, color: "text-slate-900" },
+                { label: "Models", value: stats.models, icon: Database, color: "text-blue-600" },
+                { label: "Intervals", value: stats.intervals, icon: Activity, color: "text-green-600" },
+                { label: "Articles", value: stats.articles, icon: FileText, color: "text-blue-900" },
               ].map((stat, i) => (
-                <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                  <div className="text-slate-400 text-xs font-medium mb-1 uppercase tracking-wider">{stat.label}</div>
-                  <div className={cn("text-2xl font-bold flex items-center justify-between", stat.color)}>
+                <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-transform hover:scale-[1.02]">
+                  <div className="text-slate-400 text-[10px] font-bold mb-1 uppercase tracking-widest truncate">{stat.label}</div>
+                  <div className={cn("text-xl md:text-2xl font-black flex items-center justify-between", stat.color)}>
                     {stat.value.toString().padStart(2, '0')}
-                    <stat.icon className="w-4 h-4 opacity-20" />
+                    <stat.icon className="w-4 h-4 opacity-10 hidden sm:block" />
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[500px]">
-              <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:h-[500px]">
+              <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden h-[300px] lg:h-full">
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                   <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                     <TrendingUp size={14} /> Activity Growth 

@@ -136,26 +136,79 @@ export default function AdminDashboard() {
     return u.email?.toLowerCase().includes(term) || u.displayName?.toLowerCase().includes(term);
   });
 
+  const counts = {
+    all: requests.length,
+    pending: requests.filter(r => r.status === 'pending').length,
+    approved: requests.filter(r => r.status === 'approved').length,
+    rejected: requests.filter(r => r.status === 'rejected').length,
+  };
+
   return (
     <div className="space-y-8">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Administration</h2>
-          <p className="text-slate-500 text-sm">Manage user permissions and administrative access requests.</p>
+          <h2 className="text-3xl font-bold tracking-tighter uppercase flex items-center gap-3 text-slate-800">
+            <Shield className="w-8 h-8 text-blue-600" />
+            Administration
+          </h2>
+          <p className="text-slate-500 text-sm italic">User permissions and access gateway.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-            <input 
-              type="text" 
-              placeholder={activeTab === 'requests' ? "Search requests..." : "Search users..."}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none w-64 transition-all"
-            />
+        
+        <div className="flex bg-slate-100 p-1 rounded-xl w-full sm:w-auto overflow-x-auto shrink-0">
+          <button 
+            onClick={() => setActiveTab('requests')}
+            className={cn(
+              "flex-1 sm:flex-none px-6 py-2 text-[10px] font-bold uppercase tracking-[0.1em] rounded-lg transition-all flex items-center justify-center gap-2 whitespace-nowrap",
+              activeTab === 'requests' ? "bg-white text-slate-900 shadow-md" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <Clock size={14} /> Requests
+          </button>
+          <button 
+            onClick={() => setActiveTab('users')}
+            className={cn(
+              "flex-1 sm:flex-none px-6 py-2 text-[10px] font-bold uppercase tracking-[0.1em] rounded-lg transition-all flex items-center justify-center gap-2 whitespace-nowrap",
+              activeTab === 'users' ? "bg-white text-slate-900 shadow-md" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <Users size={14} /> Users
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "Pending", count: counts.pending, status: "pending", color: "text-amber-500" },
+          { label: "Approved", count: counts.approved, status: "approved", color: "text-emerald-500" },
+          { label: "Rejected", count: counts.rejected, status: "rejected", color: "text-rose-500" },
+          { label: "Total Users", count: users.length, status: "all", color: "text-slate-900" },
+        ].map((stat, i) => (
+          <div 
+            key={i} 
+            className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+            onClick={() => {
+              if (stat.status !== "all") {
+                setActiveTab('requests');
+                setFilter(stat.status as any);
+              } else {
+                setActiveTab('users');
+              }
+            }}
+          >
+            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</div>
+            <div className={cn("text-2xl font-mono font-black", stat.color)}>
+              {stat.count.toString().padStart(2, '0')}
+            </div>
+            <div className="w-full h-1 bg-slate-100 mt-3 rounded-full overflow-hidden">
+               <motion.div 
+                 initial={{ width: 0 }}
+                 animate={{ width: "100%" }}
+                 className={cn("h-full", stat.color.replace('text', 'bg'))} 
+               />
+            </div>
           </div>
-        </div>
-      </header>
+        ))}
+      </div>
 
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="flex border-b border-slate-200 bg-slate-50/30">
@@ -170,9 +223,9 @@ export default function AdminDashboard() {
             {activeTab === 'requests' && (
               <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
             )}
-            {requests.filter(r => r.status === 'pending').length > 0 && (
+            {counts.pending > 0 && (
               <span className="ml-2 px-1.5 py-0.5 bg-amber-500 text-white rounded-full text-[8px] animate-pulse">
-                {requests.filter(r => r.status === 'pending').length}
+                {counts.pending}
               </span>
             )}
           </button>
@@ -193,17 +246,23 @@ export default function AdminDashboard() {
 
         {activeTab === 'requests' ? (
           <>
-            <div className="flex border-b border-slate-100 px-4">
+            <div className="flex border-b border-slate-100 px-4 bg-slate-50/10">
               {(['pending', 'approved', 'rejected', 'all'] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setFilter(t)}
                   className={cn(
-                    "px-4 py-3 text-[9px] font-bold uppercase tracking-wider relative transition-colors",
+                    "px-4 py-3 text-[9px] font-bold uppercase tracking-wider relative transition-colors flex items-center gap-2",
                     filter === t ? "text-slate-900" : "text-slate-400 hover:text-slate-500"
                   )}
                 >
-                  {t}
+                  <span className="relative z-10">{t}</span>
+                  <span className={cn(
+                    "px-1.5 py-0.5 rounded-full text-[8px] font-mono",
+                    filter === t ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500"
+                  )}>
+                    {counts[t]}
+                  </span>
                   {filter === t && (
                     <motion.div 
                       layoutId="filter-pill"

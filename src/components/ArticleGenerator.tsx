@@ -127,13 +127,13 @@ export default function ArticleGenerator() {
       };
 
       const formatPTName = (name: string) => {
-        return name
-          .replace(/\bPetrol Manual\b/gi, "Petrol-Manual")
-          .replace(/\bPetrol Automatic\b/gi, "Petrol-Automatic")
-          .replace(/\bDiesel Manual\b/gi, "Diesel-Manual")
-          .replace(/\bDiesel Automatic\b/gi, "Diesel-Automatic")
-          .replace(/\bTurbo Petrol Manual\b/gi, "Turbo Petrol-Manual")
-          .replace(/\bTurbo Petrol Automatic\b/gi, "Turbo Petrol-Automatic");
+          return name
+            .replace(/\bPetrol Manual\b/gi, "Petrol-Manual")
+            .replace(/\bPetrol Automatic\b/gi, "Petrol-Automatic")
+            .replace(/\bDiesel Manual\b/gi, "Diesel-Manual")
+            .replace(/\bDiesel Automatic\b/gi, "Diesel-Automatic")
+            .replace(/\bTurbo Petrol Manual\b/gi, "Turbo Petrol-Manual")
+            .replace(/\bTurbo Petrol Automatic\b/gi, "Turbo Petrol-Automatic");
       };
 
       const formatNumber = (num: number) => new Intl.NumberFormat('en-IN').format(num);
@@ -147,7 +147,7 @@ export default function ArticleGenerator() {
       content += `Image:\nAny ${brand.name} ${model.name} Image\n\n`;
       content += `Caption:\n${brand.name} ${model.name} Service Cost\n\nOfficial Estimates (${formatNumber(maxKm)}km)\n\n`;
       content += `Social:\nNA\n\n`;
-      content += `Intro:\n\nIn this article, we’ll provide you with the routine service and maintenance cost for the ${powertrainNames}. These are periodic service cost estimates of up to ${maxYear} years or ${formatLakh(maxKm)} kilometres for the following powertrains of the ${brand.name} ${model.name}:\n\n`;
+      content += `Intro:\n\nIn this article, we’ll provide you with the routine service and maintenance cost for the ${brand.name} ${model.name} ${powertrainNames}. These are periodic service cost estimates of up to ${maxYear} years or ${formatLakh(maxKm)} kilometres for the following powertrains of the ${brand.name} ${model.name}:\n\n`;
       content += pts.map(pt => `- ${formatPTName(pt.name)}`).join('\n') + "\n\n";
 
       // Generate section for each powertrain
@@ -172,26 +172,6 @@ export default function ArticleGenerator() {
         ptIntervals.forEach(i => {
           i.items?.forEach((item: any) => allItems.add(item.service || item.name));
         });
-        // Order mapping for service items as requested
-        const PREFERRED_ORDER = [
-          "ENGINE OIL - HIGH PERFORMANCE SYNTHETIC",
-          "ELEMENT ASSEMBLY - OIL FILTER",
-          "AIR CLEANER ELEMENT - ENGINE AIR FILTER",
-          "FILTER ASSEMBLY - CABIN / AC DUST FILTER",
-          "WASHER - SUMP PLUG SEALING",
-          "BRAKE FLUID - DOT 4 SPECIFICATION",
-          "COOLANT - ETHYLENE GLYCOL CONCENTRATE",
-          "SPARK PLUGS - IRIDIUM / PLATINUM CORE",
-          "WINDSHIELD WASHER FLUID CONCENTRATE",
-          "GENERAL LUBRICATION & DOOR HINGE SERVICE",
-          "ATF OIL",
-          "TIMING BELT COOLANT PUMP",
-          "TIMING BELT / CHAIN",
-          "V BELT",
-          "SUNROOF LUBRICATION",
-          "OIL DRAIN PLUG"
-        ];
-
         const itemsList = Array.from(allItems).map(serviceName => {
           let quantityLabel = "";
           for (const interval of ptIntervals) {
@@ -199,7 +179,6 @@ export default function ArticleGenerator() {
             if (match) {
               const qty = match.quantity || match.requiredQuantity || match.capacity;
               const unit = (match.unit || "").trim();
-              // Only show quantity if more than 1, or if it has a unit (like L, ml)
               if (qty && (qty > 1 || unit)) {
                 quantityLabel = ` (${qty}${unit})`;
                 break;
@@ -210,19 +189,12 @@ export default function ArticleGenerator() {
             name: serviceName,
             displayName: `${serviceName}${quantityLabel}`
           };
-        }).sort((a, b) => {
-          const indexA = PREFERRED_ORDER.findIndex(p => a.name.toUpperCase().includes(p.toUpperCase()) || p.toUpperCase().includes(a.name.toUpperCase()));
-          const indexB = PREFERRED_ORDER.findIndex(p => b.name.toUpperCase().includes(p.toUpperCase()) || p.toUpperCase().includes(b.name.toUpperCase()));
-          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-          if (indexA !== -1) return -1;
-          if (indexB !== -1) return 1;
-          return a.name.localeCompare(b.name);
         });
 
-        // Workshop Style HTML Table - Stripped of internal markdown-breaking newlines
+        // Workshop Style HTML Table
         let tableHtml = `<div class="workshop-table-container"><table class="workshop-table"><thead>`;
         tableHtml += `<tr><th colspan="${ptIntervals.length + 1}" class="workshop-title"><h3>${brand.name.toUpperCase()} ${model.name.toUpperCase()}<br/>${pName.toUpperCase()}<br/>SERVICE COST</h3></th></tr>`;
-        tableHtml += `<tr class="header-row"><th class="label-col">INTERVAL →</th>${ptIntervals.map(i => `<th>${i.months >= 12 ? Math.floor(i.months / 12) + 'yr' : i.months + 'm'}</th>`).join('')}</tr>`;
+        tableHtml += `<tr class="header-row"><th class="label-col">INTERVAL →</th>${ptIntervals.map(i => `<th>${i.months >= 12 ? Math.floor(i.months / 12) + 'YR' : i.months + 'M'}</th>`).join('')}</tr>`;
         tableHtml += `<tr class="header-row"><th class="label-col">ODO MTR →</th>${ptIntervals.map(i => `<th>${formatNumber(i.kilometers)}</th>`).join('')}</tr></thead>`;
         tableHtml += `<tbody><tr><td class="label-col">Labour charges</td>${ptIntervals.map(i => `<td>${formatNumber(Math.round(i.laborCost || 0))}</td>`).join('')}</tr>`;
         
@@ -245,15 +217,9 @@ export default function ArticleGenerator() {
         const months = Math.max(...ptIntervals.map(i => i.months));
         const avgMonthly = Math.round(totalCost / months);
         
-        // Split markers for long-term maintenance paragraph
-        const midPointIdx = Math.floor(ptIntervals.length / 2);
-        const firstKm = ptIntervals[0]?.kilometers || 0;
-        const midKm = ptIntervals[midPointIdx]?.kilometers || 0;
-        const lastKm = ptIntervals[ptIntervals.length - 1]?.kilometers || 0;
-        
         content += `For the first ${maxPTYear} years of ownership, your average monthly maintenance cost will stand at Rs. ${new Intl.NumberFormat('en-IN').format(avgMonthly)} with total costs adding up to Rs. ${new Intl.NumberFormat('en-IN').format(totalCost)}. If you keep the ${model.name} ${pName} for ${maxPTYear} years, you can expect to spend Rs. ${new Intl.NumberFormat('en-IN').format(avgMonthly)} per month on maintenance. In this case, the total maintenance expense for long-term ownership will be Rs. ${new Intl.NumberFormat('en-IN').format(totalCost)}.\n\n`;
 
-        // Workshop Style Ownership Summary Table - Horizontal Layout with Milestones
+        // Summary Table
         const milestones = [36, 60, 84, 120, 180]; // 3, 5, 7, 10, 15 years
         const summaryIntervals = ptIntervals.filter(i => milestones.includes(i.months));
 
@@ -262,41 +228,46 @@ export default function ArticleGenerator() {
           summaryTableHtml += `<tr><th colspan="${summaryIntervals.length + 1}" class="workshop-title"><h3>${brand.name.toUpperCase()} ${model.name.toUpperCase()}<br/>${pName.toUpperCase()}<br/>TOTAL & AVERAGE PERIODIC SERVICE COST</h3></th></tr>`;
           summaryTableHtml += `<tr class="header-row"><th class="label-col">Interval</th>${summaryIntervals.map(i => `<th>${getPeriodLabel(i.months)}</th>`).join('')}</tr></thead>`;
           summaryTableHtml += `<tbody>`;
-          
           summaryTableHtml += `<tr><td class="label-col">Odometer</td>${summaryIntervals.map(i => `<td>${formatNumber(i.kilometers)}km</td>`).join('')}</tr>`;
-          
           summaryTableHtml += `<tr><td class="label-col">Total</td>${summaryIntervals.map(i => {
             const cumulativeTotal = ptIntervals.filter(p => p.months <= i.months).reduce((acc, p) => acc + (p.totalCost || 0), 0);
             return `<td>Rs. ${formatNumber(Math.round(cumulativeTotal))}</td>`;
           }).join('')}</tr>`;
-
           summaryTableHtml += `<tr><td class="label-col">Avg Cost/km</td>${summaryIntervals.map(i => {
             const cumulativeTotal = ptIntervals.filter(p => p.months <= i.months).reduce((acc, p) => acc + (p.totalCost || 0), 0);
             const avgPerKm = (cumulativeTotal / i.kilometers).toFixed(2);
             return `<td>Rs. ${avgPerKm}</td>`;
           }).join('')}</tr>`;
-
           summaryTableHtml += `<tr><td class="label-col">Avg Cost/month</td>${summaryIntervals.map(i => {
             const cumulativeTotal = ptIntervals.filter(p => p.months <= i.months).reduce((acc, p) => acc + (p.totalCost || 0), 0);
             const avgPerMo = Math.round(cumulativeTotal / i.months);
             return `<td>Rs. ${formatNumber(avgPerMo)}</td>`;
           }).join('')}</tr>`;
-
           summaryTableHtml += `</tbody></table></div>`;
           content += `${summaryTableHtml}\n\n`;
         }
 
-        // Long-term Maintenance Paragraph
+        const firstKm = ptIntervals[0]?.kilometers || 0;
+        const lastKm = ptIntervals[ptIntervals.length - 1]?.kilometers || 0;
         const firstTotal = ptIntervals[0]?.totalCost || 0;
-        const midIntervals = ptIntervals.slice(0, midPointIdx + 1);
-        const midTotal = midIntervals.reduce((acc, i) => acc + (i.totalCost || 0), 0);
-        const midAvgPerKm = (midTotal / midKm).toFixed(2);
         const lastAvgPerKm = (totalCost / lastKm).toFixed(2);
 
-        content += `For the first ${new Intl.NumberFormat('en-IN').format(firstKm)}km of driving the ${brand.name} ${model.name} ${pName}, you will have to pay Rs. ${(firstTotal / firstKm).toFixed(2)} per km in routine maintenance, amounting to a total of Rs. ${new Intl.NumberFormat('en-IN').format(firstTotal)}. By ${new Intl.NumberFormat('en-IN').format(midKm)}km, the ${model.name} ${pName} will cost Rs. ${new Intl.NumberFormat('en-IN').format(midTotal)} in periodic maintenance, which is Rs. ${midAvgPerKm} per kilometre. At the ${new Intl.NumberFormat('en-IN').format(lastKm)}km mark, your per kilometre maintenance cost will increase to Rs. ${lastAvgPerKm} per km with the total adding up to Rs. ${new Intl.NumberFormat('en-IN').format(totalCost)}.\n\n`;
+        content += `For the first ${new Intl.NumberFormat('en-IN').format(firstKm)}km of driving the ${brand.name} ${model.name} ${pName}, you will have to pay Rs. ${(firstTotal / firstKm).toFixed(2)} per km in routine maintenance, amounting to a total of Rs. ${new Intl.NumberFormat('en-IN').format(firstTotal)}. By the ${new Intl.NumberFormat('en-IN').format(lastKm)}km mark, your per kilometre maintenance cost will be Rs. ${lastAvgPerKm} per km with the total adding up to Rs. ${new Intl.NumberFormat('en-IN').format(totalCost)}.\n\n`;
       });
 
       setArticle(content);
+      
+      // Auto-save to articles collection for tracking
+      const articleId = slugify(`${brand.name}-${model.name}-maintenance-cost`);
+      await setDoc(doc(db, "articles", articleId), {
+        brandId: selectedBrand,
+        brandName: brand.name,
+        modelId: selectedModel,
+        modelName: model.name,
+        content,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
       setIsGenerating(false);
     } catch (error) {
        console.error("Article Generation Failed:", error);
@@ -314,9 +285,6 @@ export default function ArticleGenerator() {
   const copyAsRichText = async () => {
     if (!article) return;
     
-    // Create a temporary container to render the markdown to HTML
-    // We'll use a style string that includes the critical CSS for tables
-    // so it's preserved when pasting into GDocs
     const tableStyles = `
       <style>
         table { border-collapse: collapse; width: 100%; max-width: 1280px; border: 1px solid #000; margin: 10px 0; font-family: Arial, sans-serif; background: #fff; }
@@ -330,7 +298,6 @@ export default function ArticleGenerator() {
       </style>
     `;
 
-    // Access the preview element's innerHTML
     const element = document.getElementById('article-preview-content');
     if (!element) return;
 
@@ -349,7 +316,7 @@ export default function ArticleGenerator() {
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Rich text copy failed:", err);
-      copyToClipboard(); // Fallback to plain text
+      copyToClipboard(); 
     }
   };
 
@@ -360,7 +327,7 @@ export default function ArticleGenerator() {
       className="space-y-8 pb-20"
     >
       <header>
-        <h2 className="text-3xl font-bold tracking-tighter uppercase">Article Generator</h2>
+        <h2 className="text-3xl font-bold tracking-tighter uppercase">Article Hub</h2>
         <p className="tech-header">Generate search-optimized maintenance cost articles</p>
       </header>
 

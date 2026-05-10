@@ -227,38 +227,41 @@ export default function ServiceScheduleManager({ powertrainId, powertrainName, o
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-5xl bg-white rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] md:max-h-[85vh]"
       >
-        <header className="p-8 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Settings className="text-blue-600" size={18} />
-              <h2 className="text-2xl font-black tracking-tighter uppercase text-slate-900">Service Architecture</h2>
+        <header className="p-4 md:p-5 border-b border-slate-100 bg-white flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+              <Settings size={20} />
             </div>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.3em] font-mono">
-              Engineering Node: {powertrainName}
-            </p>
+            <div>
+              <h2 className="text-sm md:text-lg font-bold tracking-tight text-slate-900 leading-none mb-1">Service Schedule Manager</h2>
+              <p className="text-[9px] md:text-[10px] text-slate-400 font-medium uppercase tracking-widest leading-none">
+                Vehicle Variant: <span className="text-slate-600 font-bold truncate max-w-[150px] md:max-w-none inline-block align-bottom">{powertrainName}</span>
+              </p>
+            </div>
           </div>
-          <button onClick={onClose} className="p-3 hover:bg-slate-200 rounded-full transition-colors">
-            <X size={24} className="text-slate-500" />
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600">
+            <X size={20} />
           </button>
         </header>
 
-        <div className="flex-1 overflow-hidden flex">
-          {/* List Profile */}
-          <div className="w-1/3 border-r border-slate-100 bg-slate-50/50 flex flex-col">
-            <div className="p-6 flex justify-between items-center">
-              <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Intervals</h3>
+        <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
+          {/* List Sidebar */}
+          <div className="w-full md:w-72 border-r border-slate-100 bg-slate-50/30 flex flex-col shrink-0 max-h-48 md:max-h-none border-b md:border-b-0">
+            <div className="p-4 flex justify-between items-center bg-white/50 border-b border-slate-100/50 shrink-0">
+              <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Maintenance Intervals</h3>
               {isAdmin && (
                 <button 
                   onClick={handleAddInterval}
-                  className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors shadow-lg shadow-blue-200"
+                  className="w-7 h-7 flex items-center justify-center bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+                  title="Add Interval"
                 >
                   <Plus size={14} />
                 </button>
               )}
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
               {intervals.map((interval) => (
                 <div
                   role="button"
@@ -266,231 +269,257 @@ export default function ServiceScheduleManager({ powertrainId, powertrainName, o
                   key={interval.id}
                   onClick={() => handleEditInterval(interval)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
+                    if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       handleEditInterval(interval);
                     }
                   }}
                   className={cn(
-                    "w-full p-4 rounded-2xl border text-left transition-all group relative cursor-pointer",
+                    "w-full p-3 rounded-xl border text-left transition-all group relative overflow-hidden cursor-pointer",
                     editingInterval?.id === interval.id 
-                      ? "bg-white border-blue-200 shadow-xl shadow-blue-50/50 ring-2 ring-blue-500/10" 
-                      : "bg-white border-slate-200 hover:border-blue-200 shadow-sm"
+                      ? "bg-white border-blue-500 shadow-lg shadow-blue-500/5 ring-1 ring-blue-500" 
+                      : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
                   )}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs font-black uppercase text-slate-900">{interval.name}</span>
+                  <div className="flex justify-between items-start mb-1">
+                    <span className={cn(
+                      "text-xs font-bold transition-colors",
+                      editingInterval?.id === interval.id ? "text-blue-600" : "text-slate-900"
+                    )}>{interval.name}</span>
                     {isAdmin && (
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleDeleteInterval(interval.id); }}
-                          className="p-1 text-slate-400 hover:text-red-500"
-                          aria-label="Delete interval"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteInterval(interval.id); }}
+                        className="p-1 text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 size={10} />
+                      </button>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-[10px] text-slate-500 font-bold uppercase font-mono">
-                    <span className="flex items-center gap-1"><Database size={10} /> {interval.kilometers.toLocaleString()} KM</span>
-                    <span className="flex items-center gap-1"><Calendar size={10} /> {interval.months} MO</span>
+                  <div className="flex items-center gap-3 text-[9px] text-slate-400 font-bold uppercase">
+                    <span className="flex items-center gap-1"><Database size={10} /> {interval.kilometers.toLocaleString()}</span>
+                    <span className="flex items-center gap-1"><Calendar size={10} /> {interval.months}M</span>
+                    <span className="ml-auto text-blue-600">{formatCurrency(interval.totalCost)}</span>
                   </div>
-                  {editingInterval?.id === interval.id && (
-                    <motion.div layoutId="active-indicator" className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-600 rounded-full" />
-                  )}
                 </div>
               ))}
+              {intervals.length === 0 && (
+                <div className="py-20 text-center text-slate-400 text-xs italic px-6">
+                  No service intervals defined for this vehicle.
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Edit Panel */}
-          <div className="flex-1 bg-white flex flex-col">
+          {/* Editor Panel */}
+          <div className="flex-1 bg-white flex flex-col min-w-0">
             <AnimatePresence mode="wait">
               {editingInterval ? (
                 <motion.div 
                   key="edit-form"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   className="flex-1 flex flex-col overflow-hidden"
                 >
-                  <div className="p-8 border-b border-slate-50 space-y-6">
-                    <div className="grid grid-cols-3 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Internal Label</label>
+                  {/* Stats & Header Info */}
+                  <div className="p-5 md:p-6 border-b border-slate-50 space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-1">Service Name</label>
                         <input 
                           type="text"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 outline-none"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none"
                           value={editingInterval.name}
+                          placeholder="e.g., Minor Service"
                           onChange={(e) => setEditingInterval({ ...editingInterval, name: e.target.value })}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Odometer Trigger (KM)</label>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-1">Kilometers Trigger</label>
                         <input 
                           type="number"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 outline-none font-mono"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none font-mono"
                           value={editingInterval.kilometers}
                           onChange={(e) => setEditingInterval({ ...editingInterval, kilometers: Number(e.target.value) })}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Temporal Trigger (Months)</label>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-1">Months Trigger</label>
                         <input 
                           type="number"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 outline-none font-mono"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none font-mono"
                           value={editingInterval.months}
                           onChange={(e) => setEditingInterval({ ...editingInterval, months: Number(e.target.value) })}
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-6 pt-4 border-t border-slate-50">
-                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Labor Cost (INR)</label>
-                        <input 
-                          type="number"
-                          className="w-full bg-blue-50/30 border border-blue-100 rounded-xl p-3 text-sm font-bold text-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none font-mono"
-                          value={editingInterval.laborCost}
-                          onChange={(e) => setEditingInterval({ 
-                            ...editingInterval, 
-                            laborCost: Number(e.target.value),
-                            totalCost: Number(e.target.value) + (editingInterval.partsCost || 0)
-                          })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aggregate Parts</label>
-                        <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-400 font-mono">
-                          {formatCurrency(editingInterval.partsCost || 0)}
+                    <div className="flex flex-wrap items-center gap-4 p-4 bg-slate-900 rounded-2xl text-white">
+                      <div className="flex-1 min-w-[120px]">
+                        <p className="text-[9px] font-bold uppercase text-slate-400 mb-1">Labor Charges</p>
+                        <div className="relative">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-xs">₹</span>
+                          <input 
+                            type="number"
+                            className="w-full bg-slate-800 border-none rounded-lg py-1.5 pl-6 pr-2 text-base font-black focus:ring-2 focus:ring-blue-500 outline-none font-mono text-blue-400"
+                            value={editingInterval.laborCost}
+                            onChange={(e) => setEditingInterval({ 
+                              ...editingInterval, 
+                              laborCost: Number(e.target.value),
+                              totalCost: Number(e.target.value) + (editingInterval.partsCost || 0)
+                            })}
+                          />
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Total Valuation</label>
-                        <div className="w-full bg-blue-600 text-white border border-blue-600 rounded-xl p-3 text-sm font-black font-mono">
-                          {formatCurrency(editingInterval.totalCost || 0)}
-                        </div>
+                      <div className="w-px h-8 bg-slate-800 hidden sm:block" />
+                      <div className="flex-1 min-w-[120px]">
+                        <p className="text-[9px] font-bold uppercase text-slate-400 mb-1">Parts Subtotal</p>
+                        <p className="text-lg font-black font-mono text-white">{formatCurrency(editingInterval.partsCost || 0)}</p>
+                      </div>
+                      <div className="w-px h-8 bg-slate-800 hidden sm:block" />
+                      <div className="flex-1 min-w-[160px] bg-blue-600 rounded-xl p-3 shadow-lg shadow-blue-500/10">
+                        <p className="text-[9px] font-bold uppercase text-blue-100 mb-0.5">Total Estimated Cost</p>
+                        <p className="text-xl font-black font-mono">{formatCurrency(editingInterval.totalCost || 0)}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                    <div className="flex justify-between items-center mb-6">
-                      <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Bill of Materials / Operations</h4>
+                  <div className="flex-1 overflow-y-auto p-5 md:p-6 pt-0 custom-scrollbar">
+                    <div className="flex justify-between items-center py-4 sticky top-0 bg-white z-10 border-b border-slate-50 mb-4">
+                      <h4 className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+                        <Wrench size={12} /> Service Parts & Operations
+                      </h4>
                       {isAdmin && (
                         <button 
                           onClick={addItemToInterval}
-                          className="text-[10px] font-bold uppercase tracking-widest text-blue-600 flex items-center gap-1 hover:underline decoration-2"
+                          className="px-3 py-1.5 bg-blue-50 text-blue-600 text-[9px] font-bold uppercase tracking-widest rounded-lg hover:bg-blue-100 transition-all flex items-center gap-2"
                         >
-                          <Plus size={12} /> Add Component
+                          <Plus size={12} /> Add Line Item
                         </button>
                       )}
                     </div>
 
                     <div className="space-y-3">
                       {editingInterval.items?.map((item, idx) => (
-                        <div key={idx} className="flex gap-4 items-end bg-slate-50 p-4 rounded-2xl border border-slate-100 group">
-                          <div className="flex-1 space-y-1">
-                             <label className="text-[8px] font-bold uppercase text-slate-400">Resource / Part Name</label>
-                             <input 
-                               list="common-parts"
-                               className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold focus:ring-2 focus:ring-blue-500/20 outline-none uppercase"
-                               value={item.service}
-                               onChange={(e) => updateItem(idx, { service: e.target.value })}
-                             />
-                             <datalist id="common-parts">
-                               {commonParts.map(p => <option key={p} value={p} />)}
-                             </datalist>
+                        <div key={idx} className="bg-white border border-slate-100 rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow relative group">
+                          <div className="grid grid-cols-12 gap-4">
+                            <div className="col-span-12 lg:col-span-5 space-y-1">
+                               <label className="text-[8px] font-bold uppercase text-slate-400 tracking-tighter">Part / Service Name</label>
+                               <input 
+                                 list="common-parts"
+                                 className="w-full bg-slate-50 border border-slate-100 rounded-lg p-2 text-xs font-bold focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none uppercase"
+                                 value={item.service}
+                                 onChange={(e) => updateItem(idx, { service: e.target.value })}
+                               />
+                               <datalist id="common-parts">
+                                 {commonParts.map(p => <option key={p} value={p} />)}
+                               </datalist>
+                            </div>
+                            
+                            <div className="col-span-6 lg:col-span-2 space-y-1">
+                               <label className="text-[8px] font-bold uppercase text-slate-400 tracking-tighter">Action Type</label>
+                               <select 
+                                 className="w-full bg-slate-50 border border-slate-100 rounded-lg p-2 text-xs font-bold focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none appearance-none"
+                                 value={item.action}
+                                 onChange={(e) => updateItem(idx, { action: e.target.value })}
+                               >
+                                  <option>Replace</option>
+                                  <option>Inspect</option>
+                                  <option>Cleaning</option>
+                                  <option>Top-up</option>
+                                  <option>Lubricate</option>
+                                  <option>Adjustment</option>
+                               </select>
+                            </div>
+
+                            <div className="col-span-6 lg:col-span-5 grid grid-cols-3 gap-3">
+                              <div className="space-y-1">
+                                 <label className="text-[8px] font-bold uppercase text-slate-400 tracking-tighter text-center block">Price</label>
+                                 <input 
+                                   type="number"
+                                   className="w-full bg-slate-50 border border-slate-100 rounded-lg p-2 text-[11px] font-bold font-mono text-center"
+                                   value={item.pricePerUnit}
+                                   onChange={(e) => updateItem(idx, { pricePerUnit: Number(e.target.value) })}
+                                 />
+                              </div>
+                              <div className="space-y-1">
+                                 <label className="text-[8px] font-bold uppercase text-slate-400 tracking-tighter text-center block">Qty</label>
+                                 <input 
+                                   type="number"
+                                   step="0.01"
+                                   className="w-full bg-slate-50 border border-slate-100 rounded-lg p-2 text-[11px] font-bold font-mono text-center"
+                                   value={item.requiredQuantity}
+                                   onChange={(e) => updateItem(idx, { requiredQuantity: Number(e.target.value) })}
+                                 />
+                              </div>
+                              <div className="space-y-1">
+                                 <label className="text-[8px] font-bold uppercase text-slate-400 tracking-tighter text-center block">Subtotal</label>
+                                 <div className="w-full bg-blue-50 border border-blue-100 rounded-lg p-2 text-[10px] font-bold font-mono text-blue-600 text-center">
+                                   {formatCurrency(item.total).replace('₹', '')}
+                                 </div>
+                              </div>
+                            </div>
                           </div>
-                          <div className="w-32 space-y-1">
-                             <label className="text-[8px] font-bold uppercase text-slate-400">Action</label>
-                             <select 
-                               className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold focus:ring-2 focus:ring-blue-500/20 outline-none"
-                               value={item.action}
-                               onChange={(e) => updateItem(idx, { action: e.target.value })}
-                             >
-                                <option>Replace</option>
-                                <option>Inspect</option>
-                                <option>Cleaning</option>
-                                <option>Top-up</option>
-                                <option>Lubricate</option>
-                                <option>Adjustment</option>
-                             </select>
-                          </div>
-                          <div className="w-24 space-y-1">
-                             <label className="text-[8px] font-bold uppercase text-slate-400">Price</label>
-                             <input 
-                               type="number"
-                               className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold font-mono"
-                               value={item.pricePerUnit}
-                               onChange={(e) => updateItem(idx, { pricePerUnit: Number(e.target.value) })}
-                             />
-                          </div>
-                          <div className="w-20 space-y-1">
-                             <label className="text-[8px] font-bold uppercase text-slate-400">Qty</label>
-                             <input 
-                               type="number"
-                               step="0.01"
-                               className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold font-mono"
-                               value={item.requiredQuantity}
-                               onChange={(e) => updateItem(idx, { requiredQuantity: Number(e.target.value) })}
-                             />
-                          </div>
-                          <div className="w-32 space-y-1">
-                             <label className="text-[8px] font-bold uppercase text-slate-400">Subtotal</label>
-                             <div className="w-full bg-slate-200/50 rounded-lg p-2 text-xs font-bold font-mono text-slate-600">
-                               {formatCurrency(item.total)}
-                             </div>
-                          </div>
-                          <button 
-                            onClick={() => removeItem(idx)}
-                            className="p-2 text-slate-300 hover:text-red-500 transition-colors mb-0.5"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          
+                          {isAdmin && (
+                            <button 
+                              onClick={() => removeItem(idx)}
+                              className="absolute -right-2.5 -top-2.5 p-1.5 bg-white border border-slate-100 shadow-md text-slate-300 hover:text-red-500 rounded-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95 z-10"
+                              title="Remove Item"
+                            >
+                              <X size={12} />
+                            </button>
+                          )}
                         </div>
                       ))}
-                      {editingInterval.items?.length === 0 && (
-                        <div className="py-12 text-center text-slate-400 text-xs font-medium italic border-2 border-dashed border-slate-100 rounded-3xl">
-                          No components defined for this interval node.
+                      
+                      {(!editingInterval.items || editingInterval.items.length === 0) && (
+                        <div className="py-16 text-center border-2 border-dashed border-slate-100 rounded-3xl">
+                          <Wrench className="mx-auto text-slate-200 mb-4" size={48} />
+                          <p className="text-slate-400 text-sm font-medium italic">No parts or services listed for this interval.</p>
+                          <button 
+                            onClick={addItemToInterval}
+                            className="mt-4 text-blue-600 text-xs font-bold uppercase hover:underline"
+                          >
+                            Add your first item
+                          </button>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="p-8 border-t border-slate-50 flex gap-4 bg-slate-50/30">
+                  <div className="p-4 md:p-5 border-t border-slate-100 flex flex-col sm:flex-row gap-3 bg-slate-50/50">
                     <button 
                       onClick={() => setEditingInterval(null)}
-                      className="flex-1 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-600 transition-colors"
+                      className="flex-1 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 bg-white border border-slate-200 rounded-xl shadow-sm transition-all"
                     >
-                      {isAdmin ? "Stash Changes" : "Close Inspection"}
+                      Cancel
                     </button>
                     {isAdmin && (
                       <button 
                         onClick={handleSaveInterval}
                         disabled={isSubmitting}
-                        className="flex-[2] py-4 bg-blue-600 text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl shadow-2xl shadow-blue-200 hover:bg-blue-500 transition-all disabled:opacity-50"
+                        className="flex-[2] py-3 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl shadow-lg hover:bg-slate-800 transition-all disabled:opacity-50 active:scale-[0.98]"
                       >
-                        {isSubmitting ? "Committing Bit..." : "Finalize Sync"}
+                        {isSubmitting ? "Saving..." : "Save Service Node"}
                       </button>
                     )}
                   </div>
                 </motion.div>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-6">
-                  <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-200">
-                    <Settings size={48} />
+                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                  <div className="w-24 h-24 bg-slate-50 rounded-[32px] flex items-center justify-center text-slate-200 mb-6 border border-slate-100">
+                    <Database size={48} />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">No Active Buffer</h3>
-                    <p className="text-sm text-slate-500 max-w-xs mx-auto">Select an interval from the registry or create a new node to begin engineering.</p>
-                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">No Interval Selected</h3>
+                  <p className="text-xs text-slate-400 max-w-sm mx-auto mb-6">
+                    Select a maintenance interval from the sidebar to view and manage its data, or create a new one to expand the architecture.
+                  </p>
                   <button 
                     onClick={handleAddInterval}
-                    className="px-6 py-3 bg-slate-900 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all"
+                    className="px-6 py-3 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-blue-500 transition-all shadow-xl shadow-blue-500/20 active:scale-95"
                   >
-                    Initialize New Node
+                    Initialize New Interval
                   </button>
                 </div>
               )}

@@ -18,13 +18,14 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn() && (
-        (request.auth.token.email.lower() == 'navneet709123@gmail.com' && (request.auth.token.email_verified == true || request.auth.token.email_verified == null)) ||
+        request.auth.uid == '1lTf12iPhtScBKarg6Ja78enlDf2' ||
+        (request.auth.token.email != null && request.auth.token.email.lower() == 'navneet709123@gmail.com' && (request.auth.token.email_verified == true || request.auth.token.email_verified == null)) ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
     }
 
     function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+      return id is string && id.size() <= 128;
     }
 
     function incoming() {
@@ -94,8 +95,8 @@ service cloud.firestore {
     }
 
     match /importLogs/{logId} {
-      allow read, create: if isAdmin();
-      allow delete: if isAdmin();
+      allow list: if isAdmin();
+      allow get, create, delete: if isAdmin() && isValidId(logId);
     }
 
     match /users/{userId} {

@@ -152,15 +152,15 @@ export default function BrandManager() {
       animate={{ opacity: 1 }}
       className="space-y-6"
     >
-      <header className="flex justify-between items-end">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tighter uppercase">Brands</h2>
-          <p className="text-slate-400 text-xs font-medium uppercase tracking-widest">Manage automotive manufacturers and regions</p>
+          <p className="text-slate-400 text-[10px] md:text-xs font-medium uppercase tracking-widest whitespace-nowrap">Manage automotive manufacturers</p>
         </div>
         {isAdmin && (
           <button 
             onClick={() => openModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-bold uppercase tracking-widest rounded shadow-lg hover:bg-blue-500 transition-colors"
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-[11px] md:text-sm font-bold uppercase tracking-widest rounded-xl shadow-lg hover:bg-blue-500 transition-colors"
           >
             <Plus size={16} /> Add Brand
           </button>
@@ -178,56 +178,60 @@ export default function BrandManager() {
         />
       </div>
 
-      <div className="tech-card">
-        <table className="w-full text-left">
-          <thead className="tech-table-header">
-            <tr>
-              <th className="px-4 py-3 w-16">#</th>
-              <th className="px-4 py-3">Manufacturer</th>
-              <th className="px-4 py-3">Region</th>
-              <th className="px-4 py-3">Models</th>
-              <th className="px-4 py-3 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 italic">
-            {filteredBrands.map((brand, i) => (
-              <tr key={brand.id} className="hover:bg-slate-50 transition-colors group">
-                <td className="px-4 py-4 text-xs font-mono text-slate-400">{i + 1}</td>
-                <td className="px-4 py-4 font-bold text-slate-900">{brand.name}</td>
-                <td className="px-4 py-4 text-xs text-slate-500">{brand.country || "Global"}</td>
-                <td className="px-4 py-4 text-xs font-mono text-blue-600 font-bold">Active</td>
-                <td className="px-4 py-4 text-right">
-                  {isAdmin ? (
-                    <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => openModal(brand)}
-                        className="p-2 text-slate-400 hover:text-slate-600"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button 
-                        onClick={() => openDeleteModal(brand)}
-                        className="p-2 text-slate-400 hover:text-red-500"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                      Read Only
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-          {filteredBrands.length === 0 && (
-            <div className="p-20 text-center">
-              <p className="tech-header">No brands found in registry</p>
-            </div>
-          )}
+      <div className="tech-card divide-y divide-slate-100 italic">
+        <div className="hidden md:grid grid-cols-12 bg-slate-50 tech-table-header px-4 py-3">
+          <div className="col-span-1">#</div>
+          <div className="col-span-4">Manufacturer</div>
+          <div className="col-span-3">Region</div>
+          <div className="col-span-2">Status</div>
+          <div className="col-span-2 text-right">Action</div>
         </div>
+        
+        {filteredBrands.length > 0 ? filteredBrands.map((brand, i) => (
+          <div key={brand.id} className="flex flex-col md:grid md:grid-cols-12 px-4 py-4 hover:bg-slate-50 transition-colors group gap-1 md:gap-0">
+            <div className="md:col-span-1 text-[10px] font-mono text-slate-400 flex items-center md:block">
+              <span className="md:hidden mr-2">Brand #</span>{i + 1}
+            </div>
+            <div className="md:col-span-4 font-bold text-slate-900 flex items-center">
+              {brand.name}
+            </div>
+            <div className="md:col-span-3 text-[11px] text-slate-500 flex items-center">
+              <span className="md:hidden mr-2 uppercase font-bold text-slate-300">Region:</span>
+              {brand.country || "Global"}
+            </div>
+            <div className="md:col-span-2 text-[10px] font-mono text-blue-600 font-bold flex items-center">
+               <span className="md:hidden mr-2 uppercase text-slate-300">Status:</span>
+               Active
+            </div>
+            <div className="md:col-span-2 text-right flex justify-end items-center">
+              {isAdmin ? (
+                <div className="flex justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    onClick={() => openModal(brand)}
+                    className="p-2 text-slate-400 hover:text-slate-600 bg-slate-50 md:bg-transparent rounded-lg"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button 
+                    onClick={() => openDeleteModal(brand)}
+                    className="p-2 text-slate-400 hover:text-red-500 bg-slate-50 md:bg-transparent rounded-lg"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ) : (
+                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest md:opacity-0 group-hover:opacity-100 transition-opacity">
+                  Read Only
+                </span>
+              )}
+            </div>
+          </div>
+        )) : (
+          <div className="p-20 text-center">
+            <p className="tech-header text-slate-400 italic font-mono uppercase text-[11px]">No brands found in registry</p>
+          </div>
+        )}
+      </div>
 
       {/* Delete Confirmation Modal */}
       <AnimatePresence>

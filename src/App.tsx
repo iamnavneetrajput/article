@@ -7,6 +7,8 @@ import {
   Upload, 
   LayoutDashboard, 
   ChevronRight, 
+  Menu,
+  X as CloseIcon,
   User, 
   LogOut,
   Settings,
@@ -51,10 +53,10 @@ function ConnectivityBanner() {
     <motion.div 
       initial={{ height: 0, opacity: 0 }}
       animate={{ height: "auto", opacity: 1 }}
-      className="bg-orange-600 text-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shrink-0 overflow-hidden"
+      className="bg-orange-600 text-white px-4 py-2 text-[9px] md:text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shrink-0 overflow-hidden text-center"
     >
-      <AlertCircle size={12} />
-      <span>Connection Status: Cannot reach database. Check ad-blockers or connection.</span>
+      <AlertCircle size={12} className="shrink-0" />
+      <span>Offline Mode: Database unreachable. Check ad-blockers.</span>
     </motion.div>
   );
 }
@@ -68,7 +70,17 @@ import ArticleGenerator from "./components/ArticleGenerator";
 import GlobalSearch from "./components/GlobalSearch";
 import AdminDashboard from "./components/AdminDashboard";
 
-function Sidebar() {
+function Sidebar({ 
+  isCollapsed, 
+  setIsCollapsed, 
+  isMobileOpen, 
+  setIsMobileOpen 
+}: { 
+  isCollapsed: boolean, 
+  setIsCollapsed: (v: boolean) => void,
+  isMobileOpen: boolean,
+  setIsMobileOpen: (v: boolean) => void
+}) {
   const location = useLocation();
   const { user, isAdmin } = useAuth();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -135,12 +147,10 @@ function Sidebar() {
       const errorCode = err.code || "";
       const errorMessage = err.message || "";
       
-      // Specifically handle the case where iframe restrictions block the popup result
       if (
         errorCode === "auth/popup-closed-by-user" || 
         errorCode === "auth/cancelled-popup-request"
       ) {
-        // If it seems like a false positive (user says they didn't close it), suggest opening in new tab
         console.warn("Sign-in popup issue detected. This is often caused by iframe restrictions.");
         return;
       }
@@ -163,111 +173,166 @@ function Sidebar() {
     window.open(window.location.href, "_blank");
   };
 
+  const sidebarClasses = cn(
+    "fixed inset-y-0 left-0 z-50 bg-slate-900 flex flex-col h-full shrink-0 tech-sidebar transition-all duration-300 lg:static lg:flex",
+    isCollapsed ? "w-20" : "w-64",
+    isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+  );
+
   return (
-    <aside className="w-64 bg-slate-900 flex flex-col shrink-0 tech-sidebar">
-      <div className="p-6 flex items-center gap-3">
-        <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
-          <Database className="w-5 h-5 text-white" />
-        </div>
-        <span className="text-lg font-bold text-white tracking-tight">Articles Hub</span>
-      </div>
+    <>
+      {/* Mobile Backdrop */}
+      <AnimatePresence>
+        {isMobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsMobileOpen(false)}
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
 
-      <nav className="flex-1 px-4 space-y-1 pt-4">
-        <div className="text-slate-500 text-[10px] uppercase font-bold tracking-widest px-2 mb-2">Navigation</div>
-        {navItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={cn(
-              "tech-nav-item",
-              location.pathname === item.path && "tech-nav-item-active"
-            )}
-          >
-            <item.icon className="w-4 h-4" />
-            <span className="font-medium">{item.name}</span>
-          </Link>
-        ))}
-      </nav>
-
-      <div className="p-4 bg-slate-950 mt-auto">
-        {user ? (
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
-              {user.photoURL ? <img src={user.photoURL} alt="" /> : <User size={16} className="text-slate-400" />}
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-xs font-semibold text-white truncate">{user.displayName || "User"}</p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className={cn(
-                  "text-[8px] uppercase font-bold tracking-tight px-1 rounded",
-                  isAdmin ? "bg-blue-500 text-white" : "bg-slate-800 text-slate-400"
-                )}>
-                  {isAdmin ? "Administrator" : "Standard Access"}
-                </span>
-                {!isAdmin && (
-                  <button
-                    onClick={handleRequestAccess}
-                    disabled={requesting || hasRequest}
-                    className={cn(
-                      "text-[8px] uppercase font-bold tracking-tight px-1.5 py-0.5 rounded flex items-center gap-1 transition-all",
-                      hasRequest 
-                        ? "bg-slate-800 text-slate-500 cursor-default" 
-                        : "bg-blue-900/40 text-blue-300 hover:bg-blue-900/60"
-                    )}
-                  >
-                    {hasRequest ? (
-                      <>Requested <CheckCircle2 size={8} /></>
-                    ) : (
-                      <>Request Admin <ShieldCheck size={8} /></>
-                    )}
-                  </button>
-                )}
-              </div>
-              <button 
-                onClick={handleLogout}
-                className="text-[9px] text-slate-500 hover:text-white uppercase font-bold tracking-widest flex items-center gap-1 mt-1 transition-colors"
-              >
-                Logout <LogOut size={10} />
-              </button>
-            </div>
+      <aside className={sidebarClasses}>
+        <div className={cn("p-6 flex items-center gap-3 relative", isCollapsed && "justify-center px-0")}>
+          <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center shrink-0">
+            <Database className="w-5 h-5 text-white" />
           </div>
-        ) : (
-          <div className="space-y-4">
-            <button 
-              id="login-button-sidebar"
-              onClick={handleLogin}
-              disabled={isLoggingIn}
+          {!isCollapsed && (
+            <motion.span 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-lg font-bold text-white tracking-tight truncate"
+            >
+              Articles Hub
+            </motion.span>
+          )}
+
+          {/* Collapse Toggle - Desktop Only */}
+          <button 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="absolute -right-3 top-7 w-6 h-6 bg-slate-800 border border-slate-700 text-slate-400 rounded-full flex items-center justify-center hover:text-white transition-colors hidden lg:flex"
+          >
+            <ChevronRight className={cn("w-3 h-3 transition-transform", isCollapsed ? "" : "rotate-180")} />
+          </button>
+        </div>
+
+        <nav className="flex-1 px-4 space-y-1 pt-4 overflow-y-auto no-scrollbar">
+          <div className={cn("text-slate-500 text-[10px] uppercase font-bold tracking-widest px-2 mb-2", isCollapsed && "text-center")}>
+            {isCollapsed ? "NAV" : "Navigation"}
+          </div>
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => setIsMobileOpen(false)}
               className={cn(
-                "w-full py-3 text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded transition-all shadow-lg flex items-center justify-center gap-2 group",
-                isLoggingIn ? "bg-slate-700 cursor-wait" : "bg-blue-600 hover:bg-blue-500 shadow-blue-900/40"
+                "tech-nav-item relative group",
+                location.pathname === item.path && "tech-nav-item-active",
+                isCollapsed && "justify-center px-0"
               )}
             >
-              <User size={14} className={cn(isLoggingIn ? "animate-pulse" : "group-hover:scale-110 transition-transform")} />
-              {isLoggingIn ? "Authenticating..." : "Sign in with Google"}
-            </button>
-            <div className="space-y-2">
-              <p className="text-[9px] text-slate-400 text-center leading-relaxed">
-                New users: Sign in to create your secure system account.
-              </p>
-              <div className="flex flex-col gap-1.5 pt-1">
-                <button 
-                  onClick={openInNewTab}
-                  className="w-full text-center text-[8px] text-blue-400 hover:text-blue-300 uppercase font-bold tracking-widest transition-colors flex items-center justify-center gap-1"
-                >
-                  <Plus size={10} /> Open in New Window to Login
-                </button>
-                <button 
-                  onClick={() => alert("TROUBLESHOOTING LOGIN:\n\n1. Popups: If nothing happens after clicking sign-in, check your browser settings to allow popups.\n2. In-App restrictions: If the popup closes without logging you in, please use the 'Open in New Window' button above to login in a dedicated tab.\n3. Cookies: Ensure third-party cookies are not blocked.")}
-                  className="w-full text-center text-[8px] text-slate-600 hover:text-slate-400 uppercase font-bold tracking-widest transition-colors"
-                >
-                  Having trouble?
-                </button>
+              <item.icon className="w-4 h-4 shrink-0" />
+              {!isCollapsed && <span className="font-medium truncate">{item.name}</span>}
+              
+              {isCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                  {item.name}
+                </div>
+              )}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="p-4 bg-slate-950 mt-auto">
+          {user ? (
+            <div className={cn("flex items-center gap-3", isCollapsed && "flex-col")}>
+              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                {user.photoURL ? <img src={user.photoURL} alt="" /> : <User size={16} className="text-slate-400" />}
               </div>
+              {!isCollapsed ? (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex-1 overflow-hidden"
+                >
+                  <p className="text-xs font-semibold text-white truncate">{user.displayName || "User"}</p>
+                  <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                    <span className={cn(
+                      "text-[8px] uppercase font-bold tracking-tight px-1 rounded truncate max-w-[80px]",
+                      isAdmin ? "bg-blue-500 text-white" : "bg-slate-800 text-slate-400"
+                    )}>
+                      {isAdmin ? "Admin" : "Standard"}
+                    </span>
+                    {!isAdmin && (
+                      <button
+                        onClick={handleRequestAccess}
+                        disabled={requesting || hasRequest}
+                        className={cn(
+                          "text-[8px] uppercase font-bold tracking-tight px-1.5 py-0.5 rounded flex items-center gap-1 transition-all",
+                          hasRequest 
+                            ? "bg-slate-800 text-slate-500 cursor-default" 
+                            : "bg-blue-900/40 text-blue-300 hover:bg-blue-900/60"
+                        )}
+                      >
+                        {hasRequest ? "Req sent" : "Req Admin"}
+                      </button>
+                    )}
+                  </div>
+                  <button 
+                    onClick={handleLogout}
+                    className="text-[9px] text-slate-500 hover:text-white uppercase font-bold tracking-widest flex items-center gap-1 mt-1 transition-colors"
+                  >
+                    Logout <LogOut size={10} />
+                  </button>
+                </motion.div>
+              ) : (
+                <button 
+                  onClick={handleLogout}
+                  className="p-1.5 text-slate-400 hover:text-white"
+                  title="Logout"
+                >
+                  <LogOut size={16} />
+                </button>
+              )}
             </div>
-          </div>
-        )}
-      </div>
-    </aside>
+          ) : (
+            <div className={cn("space-y-4", isCollapsed && "space-y-2")}>
+              <button 
+                id="login-button-sidebar"
+                onClick={handleLogin}
+                disabled={isLoggingIn}
+                className={cn(
+                  "w-full py-3 text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded transition-all shadow-lg flex items-center justify-center gap-2 group",
+                  isLoggingIn ? "bg-slate-700 cursor-wait" : "bg-blue-600 hover:bg-blue-500 shadow-blue-900/40",
+                  isCollapsed && "py-2 px-0"
+                )}
+              >
+                <User size={14} className={cn(isLoggingIn ? "animate-pulse" : "group-hover:scale-110 transition-transform")} />
+                {!isCollapsed && (isLoggingIn ? "Authenticating..." : "Sign in")}
+              </button>
+              
+              {!isCollapsed && (
+                <div className="space-y-2">
+                  <p className="text-[9px] text-slate-400 text-center leading-relaxed">
+                    New users: Sign in to create your account.
+                  </p>
+                  <div className="flex flex-col gap-1.5 pt-1">
+                    <button 
+                      onClick={openInNewTab}
+                      className="w-full text-center text-[8px] text-blue-400 hover:text-blue-300 uppercase font-bold tracking-widest transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Plus size={10} /> Dedicated Tab Login
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </aside>
+    </>
   );
 }
 
@@ -291,23 +356,39 @@ function PageTitle() {
 
 function AppContent() {
   const { user, isAdmin } = useAuth();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <Sidebar 
+        isCollapsed={isCollapsed} 
+        setIsCollapsed={setIsCollapsed}
+        isMobileOpen={isMobileOpen}
+        setIsMobileOpen={setIsMobileOpen}
+      />
+      <div className="flex-1 flex flex-col overflow-hidden relative">
         <ConnectivityBanner />
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0">
-          <div className="flex items-center gap-4">
-            <PageTitle />
-            <span className="px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-[10px] font-bold rounded uppercase">Online</span>
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-3 md:px-6 shrink-0 z-30">
+          <div className="flex items-center gap-2 md:gap-4 overflow-hidden">
+            {/* Hamburger Toggle - Mobile Only */}
+            <button 
+              onClick={() => setIsMobileOpen(true)}
+              className="p-2.5 hover:bg-slate-100 rounded-xl text-slate-900 lg:hidden shadow-sm border border-slate-100"
+            >
+              <Menu size={20} />
+            </button>
+            <div className="truncate shrink">
+              <PageTitle />
+            </div>
+            <span className="hidden lg:inline-block px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-[10px] font-bold rounded uppercase">Online</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <GlobalSearch />
           </div>
         </header>
         
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
           <AnimatePresence mode="wait">
             {user ? (
               <Routes>

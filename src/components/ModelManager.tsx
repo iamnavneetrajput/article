@@ -62,10 +62,15 @@ export default function ModelManager() {
       snapshot.docs.forEach(doc => {
         const data = doc.data() as any;
         const pt = { id: doc.id, ...data };
-        if (!ptsByModel[data.modelId]) ptsByModel[data.modelId] = [];
-        ptsByModel[data.modelId].push(pt);
+        const mId = data.modelId || data.modelSlug; // Supporting both if they exist
+        if (mId) {
+          if (!ptsByModel[mId]) ptsByModel[mId] = [];
+          ptsByModel[mId].push(pt);
+        }
       });
       setPowertrains(ptsByModel);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, "powertrain_registry");
     });
 
     return () => {
@@ -246,19 +251,19 @@ export default function ModelManager() {
       animate={{ opacity: 1 }}
       className="space-y-6"
     >
-      <header className="flex justify-between items-end">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tighter uppercase">Vehicle Models</h2>
-          <p className="text-slate-400 text-xs font-medium uppercase tracking-widest">Manage vehicle variants and powertrain specifications</p>
+          <p className="text-slate-400 text-[10px] md:text-xs font-medium uppercase tracking-widest whitespace-nowrap">Manage variants and specifications</p>
         </div>
         {isAdmin && (
-          <div className="flex gap-2">
-            <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white text-slate-600 text-sm font-bold uppercase tracking-widest rounded-lg transition-colors hover:bg-slate-50">
-              Import CSV
+          <div className="flex gap-2 w-full md:w-auto">
+            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 bg-white text-slate-600 text-[11px] md:text-sm font-bold uppercase tracking-widest rounded-xl transition-colors hover:bg-slate-50">
+              CSV
             </button>
             <button 
               onClick={() => openModelModal()}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-bold uppercase tracking-widest rounded-lg shadow-lg hover:bg-slate-800 transition-colors"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 text-white text-[11px] md:text-sm font-bold uppercase tracking-widest rounded-xl shadow-lg hover:bg-slate-800 transition-colors"
             >
               <Plus size={16} /> Add Model
             </button>
@@ -267,7 +272,7 @@ export default function ModelManager() {
       </header>
 
       <div className="tech-card divide-y divide-slate-100">
-        <div className="grid grid-cols-12 p-3 bg-slate-50 tech-table-header">
+        <div className="hidden md:grid grid-cols-12 p-3 bg-slate-50 tech-table-header ring-1 ring-slate-100 italic">
            <div className="col-span-3">Manufacturer</div>
            <div className="col-span-4">Model</div>
            <div className="col-span-3">Variants</div>
@@ -278,36 +283,36 @@ export default function ModelManager() {
           <div key={model.id} className="tech-container">
             <div 
               onClick={() => loadPowertrains(model.id)}
-              className="grid grid-cols-12 p-4 hover:bg-slate-50/80 transition-colors text-sm items-center cursor-pointer group"
+              className="flex flex-col md:grid md:grid-cols-12 p-4 hover:bg-slate-50/80 transition-colors text-sm items-start md:items-center cursor-pointer group gap-2 md:gap-0"
             >
-              <div className="col-span-3 font-mono text-slate-400 uppercase text-[10px] tracking-widest">{model.brandName}</div>
-              <div className="col-span-4 font-bold flex items-center gap-2 text-slate-700">
-                {expandedModel === model.id ? <ChevronDown size={14} className="text-blue-500" /> : <ChevronRight size={14} className="text-slate-300" />}
-                {model.name}
+              <div className="md:col-span-3 font-mono text-slate-400 uppercase text-[9px] md:text-[10px] tracking-widest">{model.brandName}</div>
+              <div className="md:col-span-4 font-bold flex items-center gap-2 text-slate-700 w-full">
+                {expandedModel === model.id ? <ChevronDown size={14} className="text-blue-500 shrink-0" /> : <ChevronRight size={14} className="text-slate-300 shrink-0" />}
+                <span className="truncate">{model.name}</span>
               </div>
-              <div className="col-span-3">
-                <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase">
+              <div className="md:col-span-3">
+                <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[9px] md:text-[10px] font-bold rounded uppercase">
                   {powertrains[model.id]?.length || "0"} Powertrains
                 </span>
               </div>
-              <div className="col-span-2 text-right">
+              <div className="md:col-span-2 text-right w-full md:w-auto mt-2 md:mt-0 flex justify-end">
                 {isAdmin ? (
-                  <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-opacity">
                     <button 
                       onClick={(e) => { e.stopPropagation(); openModelModal(model); }}
-                      className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+                      className="p-1.5 md:p-2 text-slate-400 hover:text-slate-600 transition-colors bg-slate-50 md:bg-transparent rounded"
                     >
                       <Edit2 size={12} />
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); setItemToDelete({ type: "model", data: model }); }}
-                      className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                      className="p-1.5 md:p-2 text-slate-400 hover:text-red-500 transition-colors bg-slate-50 md:bg-transparent rounded"
                     >
                       <Trash2 size={12} />
                     </button>
                   </div>
                 ) : (
-                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Read Only</span>
+                  <span className="text-[9px] md:text-[10px] text-slate-400 uppercase font-bold tracking-widest md:opacity-0 group-hover:opacity-100 transition-opacity">Read Only</span>
                 )}
               </div>
             </div>

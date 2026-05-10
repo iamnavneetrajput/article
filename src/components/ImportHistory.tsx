@@ -2,14 +2,22 @@ import React, { useEffect, useState } from "react";
 import { collection, query, orderBy, onSnapshot, limit, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { ImportLog } from "../types";
-import { History, FileText, User as UserIcon, Calendar, CheckCircle2, AlertCircle, Clock, Trash2 } from "lucide-react";
+import { History, FileText, User as UserIcon, Calendar, CheckCircle2, AlertCircle, Clock, Trash2, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { format } from "date-fns";
 import { handleFirestoreError, OperationType } from "../lib/errorHandling";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function ImportHistory() {
+  const { user, isAdmin } = useAuth();
   const [logs, setLogs] = useState<ImportLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [itemToDelete, setItemToDelete] = useState<ImportLog | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Secondary check for the specific super admin email
+  const isSuperAdmin = user?.email?.toLowerCase() === "navneet709123@gmail.com";
+  const canDelete = isAdmin || isSuperAdmin;
 
   useEffect(() => {
     const q = query(
@@ -33,13 +41,17 @@ export default function ImportHistory() {
     return () => unsubscribe();
   }, []);
 
-  const handleDeleteLog = async (logId: string) => {
-    if (!confirm("Are you sure you want to delete this import record? This does not undo the imported data, only removes the log entry.")) return;
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
     
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, "importLogs", logId));
+      await deleteDoc(doc(db, "importLogs", itemToDelete.id));
+      setItemToDelete(null);
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `importLogs/${logId}`);
+      handleFirestoreError(error, OperationType.DELETE, `importLogs/${itemToDelete.id}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -49,6 +61,51 @@ export default function ImportHistory() {
       animate={{ opacity: 1 }}
       className="space-y-6"
     >
+      <AnimatePresence>
+        {itemToDelete && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setItemToDelete(null)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden text-center p-8"
+            >
+              <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Trash2 size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-tight">Delete Import Log?</h3>
+              <p className="text-sm text-slate-500 mb-8 leading-relaxed italic font-mono uppercase text-[11px]">
+                Are you sure you want to delete the record for <span className="text-slate-900 font-bold">"{itemToDelete.fileName}"</span>? 
+                <br /><br />
+                <span className="text-red-500">Warning:</span> This only removes the log entry. The imported data (Brands, Models, etc.) will NOT be undone.
+              </p>
+              
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setItemToDelete(null)}
+                  className="flex-1 py-3 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 bg-white border border-slate-200 rounded-xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 bg-red-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 shadow-lg shadow-red-200"
+                >
+                  {isDeleting ? "Deleting..." : "Confirm Delete"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       <header className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tighter uppercase flex items-center gap-3">
@@ -129,12 +186,15 @@ export default function ImportHistory() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button 
-                          onClick={() => handleDeleteLog(log.id)}
-                          className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {canDelete && (
+                          <button 
+                            onClick={() => setItemToDelete(log)}
+                            className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            title="Delete log permanently"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </td>
                     </motion.tr>
                   ))}
