@@ -119,59 +119,123 @@ export default function ArticleGenerator() {
 
       const getPeriodLabel = (months: number) => {
         if (months === 1) return "1 month";
-        if (months < 12) return `${months} months`;
-        if (months === 12) return "1 year";
+        if (months < 12) return `${months}m`;
         const years = months / 12;
-        if (Number.isInteger(years)) return `${years} years`;
-        return `${years.toFixed(1).replace(/\.0$/, "")} years`;
+        return `${years.toFixed(1).replace(/\.0$/, "")}y`;
       };
 
       const formatPTName = (name: string) => {
           return name
+            .replace(/\bPetrol-Manual\b/gi, "Petrol-Manual")
+            .replace(/\bPetrol-Automatic\b/gi, "Petrol-Automatic")
+            .replace(/\bDiesel-Manual\b/gi, "Diesel-Manual")
+            .replace(/\bDiesel-Automatic\b/gi, "Diesel-Automatic")
             .replace(/\bPetrol Manual\b/gi, "Petrol-Manual")
             .replace(/\bPetrol Automatic\b/gi, "Petrol-Automatic")
             .replace(/\bDiesel Manual\b/gi, "Diesel-Manual")
             .replace(/\bDiesel Automatic\b/gi, "Diesel-Automatic")
             .replace(/\bTurbo Petrol Manual\b/gi, "Turbo Petrol-Manual")
-            .replace(/\bTurbo Petrol Automatic\b/gi, "Turbo Petrol-Automatic");
+            .replace(/\bTurbo Petrol Automatic\b/gi, "Turbo Petrol-Automatic")
+            .replace(/Turbo-Petrol-Manual/gi, "Turbo Petrol-Manual")
+            .replace(/Turbo-Petrol-Automatic/gi, "Turbo Petrol-Automatic")
+            .replace(/Turbo-Petrol/gi, "Turbo Petrol")
+            .replace(/TurboPetrol/gi, "Turbo Petrol")
+            .replace(/Turbo-Petrol/gi, "Turbo Petrol");
       };
 
       const formatNumber = (num: number) => new Intl.NumberFormat('en-IN').format(num);
 
-      const powertrainNames = pts.map(p => formatPTName(p.name)).join(" and ");
-      const fuelType = (pts[0]?.fuelType || "petrol").toLowerCase();
+      // Sort powertrains: Petrol First, then engine size (e.g. 1.2 before 1.5)
+      const sortedPts = [...pts].sort((a, b) => {
+        const fuelOrder: Record<string, number> = { 'petrol': 1, 'diesel': 2, 'ev': 3, 'cng': 4 };
+        const fuelA = (a.fuelType || 'petrol').toLowerCase();
+        const fuelB = (b.fuelType || 'petrol').toLowerCase();
+        
+        if (fuelOrder[fuelA] !== fuelOrder[fuelB]) {
+          return (fuelOrder[fuelA] || 99) - (fuelOrder[fuelB] || 99);
+        }
+        
+        const getVal = (name: string) => {
+          const m = name.match(/(\d+\.?\d*)/);
+          return m ? parseFloat(m[1]) : 0;
+        };
+        
+        const valA = getVal(a.name);
+        const valB = getVal(b.name);
+        
+        if (valA !== valB) return valA - valB;
+        
+        // Priority: Manual first
+        const isManual = (n: string) => n.toLowerCase().includes('manual') ? 0 : 1;
+        const transA = isManual(a.name);
+        const transB = isManual(b.name);
+        if (transA !== transB) return transA - transB;
+
+        return a.name.localeCompare(b.name);
+      });
+
+      const s = {
+        h1: 'style="font-size: 20px; font-weight: 700; margin: 0 0 10px 0; line-height: 1.15;"',
+        h2: 'style="font-size: 16px; font-weight: 700; margin: 15px 0 10px 0; line-height: 1.15;"',
+        p: 'style="line-height: 1.15; margin-top: 0; margin-bottom: 0; padding: 0;"',
+        table: 'style="border-collapse: collapse; width: 100%; border: 1px solid #000; margin: 10px 0; font-family: Arial, sans-serif; background: #fff; line-height: 1.15;"',
+        thTd: 'style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-size: 10px; vertical-align: middle; line-height: 1.1; color: #000;"',
+        h3: 'style="font-size: 11px; line-height: 1.15; margin: 0; padding: 0; font-weight: 700;"',
+        bold: 'style="font-weight: 700;"'
+      };
+
+      const powertrainNames = sortedPts.map(p => `${brand.name} ${model.name} ${formatPTName(p.name)}`).join(" and ");
+      const fuelType = (sortedPts[0]?.fuelType || "petrol").toLowerCase();
 
       let content = `Meta Title: ${brand.name} ${model.name} Maintenance Cost (${maxYear} Year - ${formatLakh(maxKm)} km)\n\n`;
-      content += `<h1>${brand.name} ${model.name} Service Cost (${maxYear}-Year / ${formatLakh(maxKm)} Kilometres)</h1>\n\n`;
-      content += `Meta:\nFind out the ${model.name} maintenance cost estimates for ${fuelType} for up to ${maxYear} years or ${formatLakh(maxKm)} kilometres based on the official ${brand.name} India website claimed service cost.\n\n`;
-      content += `Image:\nAny ${brand.name} ${model.name} Image\n\n`;
-      content += `Caption:\n${brand.name} ${model.name} Service Cost\n\nOfficial Estimates (${formatNumber(maxKm)}km)\n\n`;
-      content += `Social:\nNA\n\n`;
-      content += `Intro:\n\nIn this article, we’ll provide you with the routine service and maintenance cost for the ${brand.name} ${model.name} ${powertrainNames}. These are periodic service cost estimates of up to ${maxYear} years or ${formatLakh(maxKm)} kilometres for the following powertrains of the ${brand.name} ${model.name}:\n\n`;
-      content += pts.map(pt => `- ${formatPTName(pt.name)}`).join('\n') + "\n\n";
+      content += `<h1 ${s.h1}>${brand.name} ${model.name} Service Cost (${maxYear}-Year / ${formatLakh(maxKm)} Kilometres)</h1>\n\n`;
+      content += `<p ${s.p}>Meta:\nFind out the ${model.name} maintenance cost estimates for ${fuelType} for up to ${maxYear} years or ${formatLakh(maxKm)} kilometres based on the official ${brand.name} India website claimed service cost.</p>\n\n`;
+      content += `<p ${s.p}>Image:\nAny ${brand.name} ${model.name} Image</p>\n\n`;
+      content += `<p ${s.p}>Caption:\n${brand.name} ${model.name} Service Cost\n\nOfficial Estimates (${formatNumber(maxKm)}km)</p>\n\n`;
+      content += `<p ${s.p}>Social:\nNA</p>\n\n`;
+      content += `<p ${s.p}>Intro:\n\nIn this article, we’ll provide you with the routine service and maintenance cost for the ${powertrainNames}. These are periodic service cost estimates of up to ${maxYear} years or ${formatLakh(maxKm)} kilometres for the following powertrains of the ${brand.name} ${model.name}:</p>\n\n`;
+      content += sortedPts.map(pt => `<p ${s.p}>- ${brand.name} ${model.name} ${formatPTName(pt.name)}</p>`).join('\n') + "\n\n";
 
       // Generate section for each powertrain
-      pts.forEach(pt => {
+      sortedPts.forEach(pt => {
         const ptIntervals = intervalsByPT[pt.id] || [];
         if (ptIntervals.length === 0) return;
 
         const pName = formatPTName(pt.name);
         const maxPTYear = Math.max(...ptIntervals.map(i => i.months / 12), 0);
         const maxLabour = Math.max(...ptIntervals.map(i => i.laborCost), 0);
-        const firstFreeInterval = ptIntervals.find(i => i.laborCost === 0);
-        const freeKm = firstFreeInterval ? firstFreeInterval.kilometers : 0;
-        const freeMo = firstFreeInterval ? firstFreeInterval.months : 0;
+        
+        // Find the last free service in the initial sequence
+        let lastFreeInterval = null;
+        for (const interval of ptIntervals) {
+          if ((interval.laborCost || 0) === 0) {
+            lastFreeInterval = interval;
+          } else {
+            break;
+          }
+        }
+
+        const freeKm = lastFreeInterval ? lastFreeInterval.kilometers : 0;
+        const freeMo = lastFreeInterval ? lastFreeInterval.months : 0;
 
         // Editorial Text Header
-        content += `<h2>${brand.name} ${model.name} – ${pName} Service Cost</h2>\n\n`;
-        content += `The ${brand.name} ${model.name} ${pName} has labour-free service for the first ${new Intl.NumberFormat('en-IN').format(freeKm)}km or ${getPeriodLabel(freeMo)}. The remaining periodic services carry a labour charge of up to Rs. ${new Intl.NumberFormat('en-IN').format(maxLabour)}.\n\n`;
-        content += `The following table provides a ${maxPTYear}-year periodic service cost breakdown of the ${brand.name} ${model.name} ${pName}:\n\n`;
+        content += `<h2 ${s.h2}>${brand.name} ${model.name} – ${pName} Service Cost</h2>\n\n`;
+        
+        if (lastFreeInterval) {
+          content += `<p ${s.p}>The ${brand.name} ${model.name} ${pName} has labour-free service for the first ${new Intl.NumberFormat('en-IN').format(freeKm)}km or ${getPeriodLabel(freeMo)}. The remaining periodic services carry a labour charge of up to Rs. ${new Intl.NumberFormat('en-IN').format(maxLabour)}.</p>\n\n`;
+        } else {
+          content += `<p ${s.p}>The periodic services for the ${brand.name} ${model.name} ${pName} carry a labour charge of up to Rs. ${new Intl.NumberFormat('en-IN').format(maxLabour)}.</p>\n\n`;
+        }
+        content += `<p ${s.p}>The following table provides a ${maxPTYear}-year periodic service cost breakdown of the ${brand.name} ${model.name} ${pName}:</p>\n\n`;
 
         // Get all unique service items across all intervals for this PT
         const allItems = new Set<string>();
         ptIntervals.forEach(i => {
-          i.items?.forEach((item: any) => allItems.add(item.service || item.name));
+          if (i.items && i.items.length > 0) {
+            i.items.forEach((item: any) => allItems.add(item.service || item.name));
+          }
         });
+        
         const itemsList = Array.from(allItems).map(serviceName => {
           let quantityLabel = "";
           for (const interval of ptIntervals) {
@@ -192,67 +256,92 @@ export default function ArticleGenerator() {
         });
 
         // Workshop Style HTML Table
-        let tableHtml = `<div class="workshop-table-container"><table class="workshop-table"><thead>`;
-        tableHtml += `<tr><th colspan="${ptIntervals.length + 1}" class="workshop-title"><h3>${brand.name.toUpperCase()} ${model.name.toUpperCase()}<br/>${pName.toUpperCase()}<br/>SERVICE COST</h3></th></tr>`;
-        tableHtml += `<tr class="header-row"><th class="label-col">INTERVAL →</th>${ptIntervals.map(i => `<th>${i.months >= 12 ? Math.floor(i.months / 12) + 'YR' : i.months + 'M'}</th>`).join('')}</tr>`;
-        tableHtml += `<tr class="header-row"><th class="label-col">ODO MTR →</th>${ptIntervals.map(i => `<th>${formatNumber(i.kilometers)}</th>`).join('')}</tr></thead>`;
-        tableHtml += `<tbody><tr><td class="label-col">Labour charges</td>${ptIntervals.map(i => `<td>${formatNumber(Math.round(i.laborCost || 0))}</td>`).join('')}</tr>`;
+        let tableHtml = `<div class="workshop-table-container"><table ${s.table} cellpadding="0" cellspacing="0"><thead>`;
+        tableHtml += `<tr><th colspan="${ptIntervals.length + 1}" style="padding: 10px; text-align: center; border: 1px solid #000; background: #f8f9fa;"><h3 ${s.h3}>${brand.name.toUpperCase()} ${model.name.toUpperCase()}<br/>${pName.toUpperCase()}<br/>SERVICE COST</h3></th></tr>`;
+        tableHtml += `<tr><th ${s.thTd}><b>INTERVAL →</b></th>${ptIntervals.map(i => `<th ${s.thTd}><b>${getPeriodLabel(i.months).toUpperCase()}</b></th>`).join('')}</tr>`;
+        tableHtml += `<tr><th ${s.thTd}><b>ODO MTR →</b></th>${ptIntervals.map(i => `<th ${s.thTd}><b>${formatNumber(i.kilometers)}</b></th>`).join('')}</tr></thead>`;
+        tableHtml += `<tbody><tr><td ${s.thTd}><b>Labour charges</b></td>${ptIntervals.map(i => `<td ${s.thTd}><b>${formatNumber(Math.round(i.laborCost || 0))}</b></td>`).join('')}</tr>`;
         
         itemsList.forEach(item => {
-          tableHtml += `<tr><td class="label-col">${item.displayName}</td>`;
+          tableHtml += `<tr><td ${s.thTd}><b>${item.displayName || "Maintenance Item"}</b></td>`;
           ptIntervals.forEach(interval => {
             const match = interval.items?.find((it: any) => (it.service || it.name) === item.name);
-            tableHtml += `<td>${match ? formatNumber(Math.round(match.total)) : 0}</td>`;
+            const val = match ? match.total : 0;
+            tableHtml += `<td ${s.thTd}><b>${formatNumber(Math.round(val))}</b></td>`;
           });
           tableHtml += `</tr>`;
         });
 
-        tableHtml += `<tr class="total-charges-row"><td class="label-col">Total Charges</td>${ptIntervals.map(i => `<td>${formatNumber(Math.round(i.totalCost || 0))}</td>`).join('')}</tr>`;
+        // Aggregate parts row: only show values for intervals that have no itemized parts
+        const hasUnitemizedParts = ptIntervals.some(i => (!i.items || i.items.length === 0) && (i.partsCost || i.partsConsumablesCost || 0) > 0);
+        if (hasUnitemizedParts) {
+          tableHtml += `<tr><td ${s.thTd}><b>Parts</b></td>${ptIntervals.map(i => {
+            const hasItems = i.items && i.items.length > 0;
+            const val = hasItems ? 0 : (i.partsCost || i.partsConsumablesCost || 0);
+            return `<td ${s.thTd}><b>${formatNumber(Math.round(val))}</b></td>`;
+          }).join('')}</tr>`;
+        }
+        
+        tableHtml += `<tr><td ${s.thTd}><b>Total Charges</b></td>${ptIntervals.map(i => `<td ${s.thTd}><b>${formatNumber(Math.round(i.totalCost || 0))}</b></td>`).join('')}</tr>`;
         tableHtml += `</tbody></table></div>`;
 
         content += `\n${tableHtml}\n\n`;
 
         // Ownership Cost Paragraph
-        const totalCost = ptIntervals.reduce((acc, i) => acc + (i.totalCost || 0), 0);
-        const months = Math.max(...ptIntervals.map(i => i.months));
-        const avgMonthly = Math.round(totalCost / months);
-        
-        content += `For the first ${maxPTYear} years of ownership, your average monthly maintenance cost will stand at Rs. ${new Intl.NumberFormat('en-IN').format(avgMonthly)} with total costs adding up to Rs. ${new Intl.NumberFormat('en-IN').format(totalCost)}. If you keep the ${model.name} ${pName} for ${maxPTYear} years, you can expect to spend Rs. ${new Intl.NumberFormat('en-IN').format(avgMonthly)} per month on maintenance. In this case, the total maintenance expense for long-term ownership will be Rs. ${new Intl.NumberFormat('en-IN').format(totalCost)}.\n\n`;
+        const getCumulativeAt = (pts: any[], limit: number, mode: 'months' | 'km') => {
+          const relevant = pts.filter(p => mode === 'months' ? p.months <= limit : p.kilometers <= limit);
+          const total = relevant.reduce((acc, p) => acc + (p.totalCost || 0), 0);
+          const actualLimit = relevant.length > 0 ? (mode === 'months' ? Math.max(...relevant.map(r => r.months)) : Math.max(...relevant.map(r => r.kilometers))) : limit;
+          return { total, limit: actualLimit };
+        };
+
+        const cost5y = getCumulativeAt(ptIntervals, 60, 'months');
+        const cost10y = getCumulativeAt(ptIntervals, 120, 'months');
+        const costMaxY = getCumulativeAt(ptIntervals, 999, 'months');
+
+        const avg5y = cost5y.limit > 0 ? Math.round(cost5y.total / cost5y.limit) : 0;
+        const avgLong = costMaxY.limit > 0 ? Math.round(costMaxY.total / costMaxY.limit) : 0;
+        const longTermLabel = costMaxY.limit >= 120 ? "10 years" : `${(costMaxY.limit / 12).toFixed(1).replace(/\.0$/, "")} years`;
+
+        content += `<p ${s.p}>For the first 5 years of ownership, your average monthly maintenance cost will stand at Rs. ${formatNumber(avg5y)} with total costs adding up to Rs. ${formatNumber(cost5y.total)}. If you keep the ${model.name} ${pName} for ${longTermLabel}, you can expect to spend Rs. ${formatNumber(avgLong)} per month on maintenance. In this case, the total maintenance expense for long-term ownership will be Rs. ${formatNumber(costMaxY.total)}.</p>\n\n`;
 
         // Summary Table
         const milestones = [36, 60, 84, 120, 180]; // 3, 5, 7, 10, 15 years
         const summaryIntervals = ptIntervals.filter(i => milestones.includes(i.months));
 
         if (summaryIntervals.length > 0) {
-          let summaryTableHtml = `<div class="workshop-table-container"><table class="workshop-table"><thead>`;
-          summaryTableHtml += `<tr><th colspan="${summaryIntervals.length + 1}" class="workshop-title"><h3>${brand.name.toUpperCase()} ${model.name.toUpperCase()}<br/>${pName.toUpperCase()}<br/>TOTAL & AVERAGE PERIODIC SERVICE COST</h3></th></tr>`;
-          summaryTableHtml += `<tr class="header-row"><th class="label-col">Interval</th>${summaryIntervals.map(i => `<th>${getPeriodLabel(i.months)}</th>`).join('')}</tr></thead>`;
+          let summaryTableHtml = `<div class="workshop-table-container"><table ${s.table} cellpadding="0" cellspacing="0"><thead>`;
+          summaryTableHtml += `<tr><th colspan="${summaryIntervals.length + 1}" style="padding: 10px; text-align: center; border: 1px solid #000; background: #f8f9fa;"><h3 ${s.h3}>${brand.name.toUpperCase()} ${model.name.toUpperCase()}<br/>${pName.toUpperCase()}<br/>TOTAL & AVERAGE PERIODIC SERVICE COST</h3></th></tr>`;
+          summaryTableHtml += `<tr><th ${s.thTd}><b>Interval</b></th>${summaryIntervals.map(i => `<th ${s.thTd}><b>${getPeriodLabel(i.months).toUpperCase()}</b></th>`).join('')}</tr></thead>`;
           summaryTableHtml += `<tbody>`;
-          summaryTableHtml += `<tr><td class="label-col">Odometer</td>${summaryIntervals.map(i => `<td>${formatNumber(i.kilometers)}km</td>`).join('')}</tr>`;
-          summaryTableHtml += `<tr><td class="label-col">Total</td>${summaryIntervals.map(i => {
+          summaryTableHtml += `<tr><td ${s.thTd}><b>Odometer</b></td>${summaryIntervals.map(i => `<td ${s.thTd}><b>${formatNumber(i.kilometers)}km</b></td>`).join('')}</tr>`;
+          summaryTableHtml += `<tr><td ${s.thTd}><b>Total</b></td>${summaryIntervals.map(i => {
             const cumulativeTotal = ptIntervals.filter(p => p.months <= i.months).reduce((acc, p) => acc + (p.totalCost || 0), 0);
-            return `<td>Rs. ${formatNumber(Math.round(cumulativeTotal))}</td>`;
+            return `<td ${s.thTd}><b>Rs. ${formatNumber(Math.round(cumulativeTotal))}</b></td>`;
           }).join('')}</tr>`;
-          summaryTableHtml += `<tr><td class="label-col">Avg Cost/km</td>${summaryIntervals.map(i => {
+          summaryTableHtml += `<tr><td ${s.thTd}><b>Avg Cost/km</b></td>${summaryIntervals.map(i => {
             const cumulativeTotal = ptIntervals.filter(p => p.months <= i.months).reduce((acc, p) => acc + (p.totalCost || 0), 0);
             const avgPerKm = (cumulativeTotal / i.kilometers).toFixed(2);
-            return `<td>Rs. ${avgPerKm}</td>`;
+            return `<td ${s.thTd}><b>Rs. ${avgPerKm}</b></td>`;
           }).join('')}</tr>`;
-          summaryTableHtml += `<tr><td class="label-col">Avg Cost/month</td>${summaryIntervals.map(i => {
+          summaryTableHtml += `<tr><td ${s.thTd}><b>Avg Cost/month</b></td>${summaryIntervals.map(i => {
             const cumulativeTotal = ptIntervals.filter(p => p.months <= i.months).reduce((acc, p) => acc + (p.totalCost || 0), 0);
             const avgPerMo = Math.round(cumulativeTotal / i.months);
-            return `<td>Rs. ${formatNumber(avgPerMo)}</td>`;
+            return `<td ${s.thTd}><b>Rs. ${formatNumber(avgPerMo)}</b></td>`;
           }).join('')}</tr>`;
           summaryTableHtml += `</tbody></table></div>`;
           content += `${summaryTableHtml}\n\n`;
         }
 
-        const firstKm = ptIntervals[0]?.kilometers || 0;
-        const lastKm = ptIntervals[ptIntervals.length - 1]?.kilometers || 0;
-        const firstTotal = ptIntervals[0]?.totalCost || 0;
-        const lastAvgPerKm = (totalCost / lastKm).toFixed(2);
+        const cost75k = getCumulativeAt(ptIntervals, 75000, 'km');
+        const cost105k = getCumulativeAt(ptIntervals, 105000, 'km');
+        const costMaxK = getCumulativeAt(ptIntervals, 999999, 'km');
 
-        content += `For the first ${new Intl.NumberFormat('en-IN').format(firstKm)}km of driving the ${brand.name} ${model.name} ${pName}, you will have to pay Rs. ${(firstTotal / firstKm).toFixed(2)} per km in routine maintenance, amounting to a total of Rs. ${new Intl.NumberFormat('en-IN').format(firstTotal)}. By the ${new Intl.NumberFormat('en-IN').format(lastKm)}km mark, your per kilometre maintenance cost will be Rs. ${lastAvgPerKm} per km with the total adding up to Rs. ${new Intl.NumberFormat('en-IN').format(totalCost)}.\n\n`;
+        const rate75k = cost75k.limit > 0 ? (cost75k.total / cost75k.limit).toFixed(2) : "0.00";
+        const rate105k = cost105k.limit > 0 ? (cost105k.total / cost105k.limit).toFixed(2) : "0.00";
+        const rateMax = costMaxK.limit > 0 ? (costMaxK.total / costMaxK.limit).toFixed(2) : "0.00";
+
+        content += `<p ${s.p}>For the first ${formatNumber(cost75k.limit)}km of driving the ${brand.name} ${model.name} ${pName}, you will have to pay Rs. ${rate75k} per km in routine maintenance, amounting to a total of Rs. ${formatNumber(cost75k.total)}. By ${formatNumber(cost105k.limit)}km, the ${model.name} ${pName} will cost Rs. ${formatNumber(cost105k.total)} in periodic maintenance, which is Rs. ${rate105k} per kilometer. At the ${formatNumber(costMaxK.limit)}km mark, your per kilometre maintenance cost will increase to Rs. ${rateMax} per km with the total adding up to Rs. ${formatNumber(costMaxK.total)}.</p>\n\n`;
       });
 
       setArticle(content);
@@ -285,23 +374,12 @@ export default function ArticleGenerator() {
   const copyAsRichText = async () => {
     if (!article) return;
     
-    const tableStyles = `
-      <style>
-        table { border-collapse: collapse; width: 100%; max-width: 1280px; border: 1px solid #000; margin: 10px 0; font-family: Arial, sans-serif; background: #fff; }
-        tr { height: 30px; }
-        th, td { border: 1px solid #000; padding: 4px 6px; text-align: center; font-size: 10px; white-space: nowrap; vertical-align: middle; line-height: 1.1; color: #000; }
-        .workshop-title { padding: 2px; text-align: center; text-transform: uppercase; font-weight: 700; }
-        .workshop-title h3 { font-size: 11px; line-height: 1.1; margin: 0; padding: 0; font-weight: 700; }
-        .header-row { font-weight: 700; text-transform: uppercase; font-size: 11px; }
-        .label-col { text-align: center; font-weight: 700; min-width: 150px; white-space: normal; }
-        .total-charges-row { font-weight: 700; font-size: 11px; }
-      </style>
-    `;
-
+    // Inline all styles for maximum compatibility with Google Docs
     const element = document.getElementById('article-preview-content');
     if (!element) return;
 
-    const htmlContent = tableStyles + element.innerHTML;
+    // Use a temporary clone to ensure we have the computed styles or standard tags
+    const htmlContent = element.innerHTML;
     const blob = new Blob([htmlContent], { type: "text/html" });
     const textBlob = new Blob([article], { type: "text/plain" });
 
@@ -409,7 +487,12 @@ export default function ArticleGenerator() {
               </div>
             </div>
 
-            <div id="article-preview-content" className="p-12 prose prose-sm max-w-none prose-table:border prose-table:border-brand-line prose-th:bg-brand-bg/50 prose-th:p-2 prose-td:p-2">
+            <div id="article-preview-content" className="p-4 md:p-12 prose prose-sm max-w-none prose-table:border prose-table:border-brand-line prose-th:bg-brand-bg/50 prose-th:p-2 prose-td:p-2 
+              prose-h1:text-[20px] prose-h1:font-bold prose-h1:leading-tight
+              prose-h3:text-[11px] prose-h3:font-bold prose-h3:leading-none
+              prose-p:leading-[1.15] prose-p:my-0
+              prose-table:text-[10px] prose-td:text-center prose-th:text-center
+            ">
               <Markdown rehypePlugins={[rehypeRaw]}>{article}</Markdown>
             </div>
           </motion.div>

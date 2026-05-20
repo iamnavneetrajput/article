@@ -218,7 +218,7 @@ function Sidebar({
           </button>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1 pt-4 overflow-y-auto no-scrollbar">
+        <nav className="flex-1 px-4 space-y-1 pt-4 overflow-y-auto overflow-x-hidden no-scrollbar">
           <div className={cn("text-slate-500 text-[10px] uppercase font-bold tracking-widest px-2 mb-2", isCollapsed && "text-center")}>
             {isCollapsed ? "NAV" : "Navigation"}
           </div>
@@ -319,12 +319,12 @@ function Sidebar({
                     New users: Sign in to create your account.
                   </p>
                   <div className="flex flex-col gap-1.5 pt-1">
-                    <button 
+                    {/* <button 
                       onClick={openInNewTab}
                       className="w-full text-center text-[8px] text-blue-400 hover:text-blue-300 uppercase font-bold tracking-widest transition-colors flex items-center justify-center gap-1"
                     >
                       <Plus size={10} /> Dedicated Tab Login
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               )}
@@ -407,7 +407,7 @@ function AppContent() {
                 <div>
                   <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Access Restricted</h2>
                   <p className="mt-2 text-slate-500 leading-relaxed">
-                    This repository is restricted to registered system users. Please sign in using your corporate credentials to continue.
+                    This repository is restricted to registered system users. Please sign in using your credentials to continue.
                   </p>
                 </div>
                 <button 
