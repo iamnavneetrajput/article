@@ -381,7 +381,7 @@ function AppContent() {
             <div className="truncate shrink">
               <PageTitle />
             </div>
-            <span className="hidden lg:inline-block px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-[10px] font-bold rounded uppercase">Online</span>
+            <span className="hidden lg:inline-block px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-[10px] font-bold rounded uppercase">by navneet</span>
           </div>
           <div className="flex items-center gap-2 md:gap-3">
             <GlobalSearch />

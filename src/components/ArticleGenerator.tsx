@@ -181,6 +181,7 @@ export default function ArticleGenerator() {
         table: 'style="border-collapse: collapse; width: 100%; border: 1px solid #000; margin: 10px 0; font-family: Arial, sans-serif; background: #fff; line-height: 1.15;"',
         thTd: 'style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-size: 10px; vertical-align: middle; line-height: 1.1; color: #000;"',
         h3: 'style="font-size: 11px; line-height: 1.15; margin: 0; padding: 0; font-weight: 700;"',
+        h4: 'style="font-size: 14px; font-weight: 700; margin: 15px 0 5px 0; line-height: 1.15; color: #000;"',
         bold: 'style="font-weight: 700;"'
       };
 
@@ -297,13 +298,17 @@ export default function ArticleGenerator() {
 
         const cost5y = getCumulativeAt(ptIntervals, 60, 'months');
         const cost10y = getCumulativeAt(ptIntervals, 120, 'months');
-        const costMaxY = getCumulativeAt(ptIntervals, 999, 'months');
+        const maxMonths = Math.max(...ptIntervals.map(i => i.months));
+        const longTermLimitMonths = maxMonths >= 120 ? 120 : maxMonths;
+        const costLongY = getCumulativeAt(ptIntervals, longTermLimitMonths, 'months');
 
         const avg5y = cost5y.limit > 0 ? Math.round(cost5y.total / cost5y.limit) : 0;
-        const avgLong = costMaxY.limit > 0 ? Math.round(costMaxY.total / costMaxY.limit) : 0;
-        const longTermLabel = costMaxY.limit >= 120 ? "10 years" : `${(costMaxY.limit / 12).toFixed(1).replace(/\.0$/, "")} years`;
+        const avgLong = costLongY.limit > 0 ? Math.round(costLongY.total / costLongY.limit) : 0;
+        const longTermLabel = costLongY.limit >= 120 ? "10 years" : `${(costLongY.limit / 12).toFixed(1).replace(/\.0$/, "")} years`;
+        const headingYearsLabel = costLongY.limit >= 120 ? "10-Year" : `${(costLongY.limit / 12).toFixed(1).replace(/\.0$/, "")}-Year`;
 
-        content += `<p ${s.p}>For the first 5 years of ownership, your average monthly maintenance cost will stand at Rs. ${formatNumber(avg5y)} with total costs adding up to Rs. ${formatNumber(cost5y.total)}. If you keep the ${model.name} ${pName} for ${longTermLabel}, you can expect to spend Rs. ${formatNumber(avgLong)} per month on maintenance. In this case, the total maintenance expense for long-term ownership will be Rs. ${formatNumber(costMaxY.total)}.</p>\n\n`;
+        content += `<h4 ${s.h4}>${headingYearsLabel} Maintenance Cost — ${model.name} ${pName}</h4>\n`;
+        content += `<p ${s.p}>For the first 5 years of ownership, your average monthly maintenance cost will stand at Rs. ${formatNumber(avg5y)} with total costs adding up to Rs. ${formatNumber(cost5y.total)}. If you keep the ${model.name} ${pName} for ${longTermLabel}, you can expect to spend Rs. ${formatNumber(avgLong)} per month on maintenance. In this case, the total maintenance expense for long-term ownership will be Rs. ${formatNumber(costLongY.total)}.</p>\n\n`;
 
         // Summary Table
         const milestones = [36, 60, 84, 120, 180]; // 3, 5, 7, 10, 15 years
@@ -341,6 +346,7 @@ export default function ArticleGenerator() {
         const rate105k = cost105k.limit > 0 ? (cost105k.total / cost105k.limit).toFixed(2) : "0.00";
         const rateMax = costMaxK.limit > 0 ? (costMaxK.total / costMaxK.limit).toFixed(2) : "0.00";
 
+        content += `<h4 ${s.h4}>${formatNumber(costMaxK.limit)}km Maintenance Cost — ${brand.name} ${model.name} ${pName}</h4>\n`;
         content += `<p ${s.p}>For the first ${formatNumber(cost75k.limit)}km of driving the ${brand.name} ${model.name} ${pName}, you will have to pay Rs. ${rate75k} per km in routine maintenance, amounting to a total of Rs. ${formatNumber(cost75k.total)}. By ${formatNumber(cost105k.limit)}km, the ${model.name} ${pName} will cost Rs. ${formatNumber(cost105k.total)} in periodic maintenance, which is Rs. ${rate105k} per kilometer. At the ${formatNumber(costMaxK.limit)}km mark, your per kilometre maintenance cost will increase to Rs. ${rateMax} per km with the total adding up to Rs. ${formatNumber(costMaxK.total)}.</p>\n\n`;
       });
 
@@ -490,6 +496,7 @@ export default function ArticleGenerator() {
             <div id="article-preview-content" className="p-4 md:p-12 prose prose-sm max-w-none prose-table:border prose-table:border-brand-line prose-th:bg-brand-bg/50 prose-th:p-2 prose-td:p-2 
               prose-h1:text-[20px] prose-h1:font-bold prose-h1:leading-tight
               prose-h3:text-[11px] prose-h3:font-bold prose-h3:leading-none
+              prose-h4:text-[14px] prose-h4:font-bold prose-h4:mt-4 prose-h4:mb-2 prose-h4:text-black
               prose-p:leading-[1.15] prose-p:my-0
               prose-table:text-[10px] prose-td:text-center prose-th:text-center
             ">
