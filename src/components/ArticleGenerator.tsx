@@ -143,6 +143,34 @@ export default function ArticleGenerator() {
             .replace(/Turbo-Petrol/gi, "Turbo Petrol");
       };
 
+      const getCleanPTName = (name: string, keepSpeedType = false) => {
+        let formatted = formatPTName(name);
+        if (!keepSpeedType) {
+          // Strip parenthesis e.g. (7-Speed DCT)
+          formatted = formatted.replace(/\s*\([^)]+\)/gi, "");
+        }
+        formatted = formatted.toLowerCase();
+        // Convert any <number>l/L to <number>L
+        formatted = formatted.replace(/\b(\d+(?:\.\d+)?)l\b/gi, "$1L");
+        if (keepSpeedType) {
+          formatted = formatted
+            .replace(/\bdct\b/g, "DCT")
+            .replace(/\btc\b/g, "TC")
+            .replace(/\bamt\b/g, "AMT")
+            .replace(/\bcvt\b/g, "CVT")
+            .replace(/\bat\b/g, "AT")
+            .replace(/\bmt\b/g, "MT")
+            .replace(/\bspeed\b/g, "speed");
+        }
+        return formatted;
+      };
+
+      const getH4PTName = (name: string) => {
+        let formatted = formatPTName(name);
+        formatted = formatted.replace(/\bSpeed\b/g, "speed");
+        return formatted;
+      };
+
       const formatNumber = (num: number) => new Intl.NumberFormat('en-IN').format(num);
 
       // Sort powertrains: Petrol First, then engine size (e.g. 1.2 before 1.5)
@@ -182,20 +210,31 @@ export default function ArticleGenerator() {
         thTd: 'style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-size: 10px; vertical-align: middle; line-height: 1.1; color: #000;"',
         h3: 'style="font-size: 11px; line-height: 1.15; margin: 0; padding: 0; font-weight: 700;"',
         h4: 'style="font-size: 14px; font-weight: 700; margin: 15px 0 5px 0; line-height: 1.15; color: #000;"',
+        ul: 'style="list-style-type: disc; margin: 10px 0 10px 20px; padding: 0;"',
+        li: 'style="line-height: 1.15; margin: 3px 0; padding: 0;"',
         bold: 'style="font-weight: 700;"'
       };
 
-      const powertrainNames = sortedPts.map(p => `${brand.name} ${model.name} ${formatPTName(p.name)}`).join(" and ");
-      const fuelType = (sortedPts[0]?.fuelType || "petrol").toLowerCase();
+      const powertrainNames = sortedPts.map(p => `${brand.name} ${model.name} ${getCleanPTName(p.name, false)}`).join(" and ");
+      
+      const fuelTypes = Array.from(new Set(sortedPts.map(p => (p.fuelType || "petrol").toLowerCase())));
+      let fuelTypeLabel = "";
+      if (fuelTypes.length === 1) {
+        fuelTypeLabel = fuelTypes[0];
+      } else if (fuelTypes.length === 2) {
+        fuelTypeLabel = `${fuelTypes[0]} and ${fuelTypes[1]}`;
+      } else {
+        fuelTypeLabel = fuelTypes.join(", ").replace(/, ([^,]*)$/, ", and $1");
+      }
 
       let content = `Meta Title: ${brand.name} ${model.name} Maintenance Cost (${maxYear} Year - ${formatLakh(maxKm)} km)\n\n`;
       content += `<h1 ${s.h1}>${brand.name} ${model.name} Service Cost (${maxYear}-Year / ${formatLakh(maxKm)} Kilometres)</h1>\n\n`;
-      content += `<p ${s.p}>Meta:\nFind out the ${model.name} maintenance cost estimates for ${fuelType} for up to ${maxYear} years or ${formatLakh(maxKm)} kilometres based on the official ${brand.name} India website claimed service cost.</p>\n\n`;
+      content += `<p ${s.p}>Meta:\nFind out the ${model.name} maintenance cost estimates for ${fuelTypeLabel} for up to ${maxYear} years or ${formatLakh(maxKm)} kilometres based on the official ${brand.name} India website claimed service cost.</p>\n\n`;
       content += `<p ${s.p}>Image:\nAny ${brand.name} ${model.name} Image</p>\n\n`;
       content += `<p ${s.p}>Caption:\n${brand.name} ${model.name} Service Cost\n\nOfficial Estimates (${formatNumber(maxKm)}km)</p>\n\n`;
       content += `<p ${s.p}>Social:\nNA</p>\n\n`;
       content += `<p ${s.p}>Intro:\n\nIn this article, we’ll provide you with the routine service and maintenance cost for the ${powertrainNames}. These are periodic service cost estimates of up to ${maxYear} years or ${formatLakh(maxKm)} kilometres for the following powertrains of the ${brand.name} ${model.name}:</p>\n\n`;
-      content += sortedPts.map(pt => `<p ${s.p}>- ${brand.name} ${model.name} ${formatPTName(pt.name)}</p>`).join('\n') + "\n\n";
+      content += `<ul ${s.ul}>\n` + sortedPts.map(pt => `  <li ${s.li}>${brand.name} ${model.name} ${formatPTName(pt.name)}</li>`).join('\n') + `\n</ul>\n\n`;
 
       // Generate section for each powertrain
       sortedPts.forEach(pt => {
@@ -203,6 +242,10 @@ export default function ArticleGenerator() {
         if (ptIntervals.length === 0) return;
 
         const pName = formatPTName(pt.name);
+        const pNameNoSpeed = getCleanPTName(pt.name, false);
+        const pNameWithSpeed = getCleanPTName(pt.name, true);
+        const pNameH4 = getH4PTName(pt.name);
+
         const maxPTYear = Math.max(...ptIntervals.map(i => i.months / 12), 0);
         const maxLabour = Math.max(...ptIntervals.map(i => i.laborCost), 0);
         
@@ -223,11 +266,11 @@ export default function ArticleGenerator() {
         content += `<h2 ${s.h2}>${brand.name} ${model.name} – ${pName} Service Cost</h2>\n\n`;
         
         if (lastFreeInterval) {
-          content += `<p ${s.p}>The ${brand.name} ${model.name} ${pName} has labour-free service for the first ${new Intl.NumberFormat('en-IN').format(freeKm)}km or ${getPeriodLabel(freeMo)}. The remaining periodic services carry a labour charge of up to Rs. ${new Intl.NumberFormat('en-IN').format(maxLabour)}.</p>\n\n`;
+          content += `<p ${s.p}>The ${brand.name} ${model.name} ${pNameNoSpeed} has labour-free service for the first ${new Intl.NumberFormat('en-IN').format(freeKm)}km or ${getPeriodLabel(freeMo)}. The remaining periodic services carry a labour charge of up to Rs. ${new Intl.NumberFormat('en-IN').format(maxLabour)}.</p>\n\n`;
         } else {
-          content += `<p ${s.p}>The periodic services for the ${brand.name} ${model.name} ${pName} carry a labour charge of up to Rs. ${new Intl.NumberFormat('en-IN').format(maxLabour)}.</p>\n\n`;
+          content += `<p ${s.p}>The periodic services for the ${brand.name} ${model.name} ${pNameNoSpeed} carry a labour charge of up to Rs. ${new Intl.NumberFormat('en-IN').format(maxLabour)}.</p>\n\n`;
         }
-        content += `<p ${s.p}>The following table provides a ${maxPTYear}-year periodic service cost breakdown of the ${brand.name} ${model.name} ${pName}:</p>\n\n`;
+        content += `<p ${s.p}>The following table provides a ${maxPTYear}-year periodic service cost breakdown of the ${brand.name} ${model.name} ${pNameWithSpeed}:</p>\n\n`;
 
         // Get all unique service items across all intervals for this PT
         const allItems = new Set<string>();
@@ -307,8 +350,8 @@ export default function ArticleGenerator() {
         const longTermLabel = costLongY.limit >= 120 ? "10 years" : `${(costLongY.limit / 12).toFixed(1).replace(/\.0$/, "")} years`;
         const headingYearsLabel = costLongY.limit >= 120 ? "10-Year" : `${(costLongY.limit / 12).toFixed(1).replace(/\.0$/, "")}-Year`;
 
-        content += `<h4 ${s.h4}>${headingYearsLabel} Maintenance Cost — ${model.name} ${pName}</h4>\n`;
-        content += `<p ${s.p}>For the first 5 years of ownership, your average monthly maintenance cost will stand at Rs. ${formatNumber(avg5y)} with total costs adding up to Rs. ${formatNumber(cost5y.total)}. If you keep the ${model.name} ${pName} for ${longTermLabel}, you can expect to spend Rs. ${formatNumber(avgLong)} per month on maintenance. In this case, the total maintenance expense for long-term ownership will be Rs. ${formatNumber(costLongY.total)}.</p>\n\n`;
+        content += `<h4 ${s.h4}>${headingYearsLabel} Maintenance Cost — ${model.name} ${pNameH4}</h4>\n`;
+        content += `<p ${s.p}>For the first 5 years of ownership, your average monthly maintenance cost will stand at Rs. ${formatNumber(avg5y)} with total costs adding up to Rs. ${formatNumber(cost5y.total)}. If you keep the ${model.name} ${pNameNoSpeed} for ${longTermLabel}, you can expect to spend Rs. ${formatNumber(avgLong)} per month on maintenance. In this case, the total maintenance expense for long-term ownership will be Rs. ${formatNumber(costLongY.total)}.</p>\n\n`;
 
         // Summary Table
         const milestones = [36, 60, 84, 120, 180]; // 3, 5, 7, 10, 15 years
@@ -346,8 +389,8 @@ export default function ArticleGenerator() {
         const rate105k = cost105k.limit > 0 ? (cost105k.total / cost105k.limit).toFixed(2) : "0.00";
         const rateMax = costMaxK.limit > 0 ? (costMaxK.total / costMaxK.limit).toFixed(2) : "0.00";
 
-        content += `<h4 ${s.h4}>${formatNumber(costMaxK.limit)}km Maintenance Cost — ${brand.name} ${model.name} ${pName}</h4>\n`;
-        content += `<p ${s.p}>For the first ${formatNumber(cost75k.limit)}km of driving the ${brand.name} ${model.name} ${pName}, you will have to pay Rs. ${rate75k} per km in routine maintenance, amounting to a total of Rs. ${formatNumber(cost75k.total)}. By ${formatNumber(cost105k.limit)}km, the ${model.name} ${pName} will cost Rs. ${formatNumber(cost105k.total)} in periodic maintenance, which is Rs. ${rate105k} per kilometer. At the ${formatNumber(costMaxK.limit)}km mark, your per kilometre maintenance cost will increase to Rs. ${rateMax} per km with the total adding up to Rs. ${formatNumber(costMaxK.total)}.</p>\n\n`;
+        content += `<h4 ${s.h4}>${formatNumber(costMaxK.limit)}km Maintenance Cost — ${brand.name} ${model.name} ${pNameH4}</h4>\n`;
+        content += `<p ${s.p}>For the first ${formatNumber(cost75k.limit)}km of driving the ${brand.name} ${model.name} ${pNameNoSpeed}, you will have to pay Rs. ${rate75k} per km in routine maintenance, amounting to a total of Rs. ${formatNumber(cost75k.total)}. By ${formatNumber(cost105k.limit)}km, the ${model.name} ${pNameNoSpeed} will cost Rs. ${formatNumber(cost105k.total)} in periodic maintenance, which is Rs. ${rate105k} per kilometer. At the ${formatNumber(costMaxK.limit)}km mark, your per kilometre maintenance cost will increase to Rs. ${rateMax} per km with the total adding up to Rs. ${formatNumber(costMaxK.total)}.</p>\n\n`;
       });
 
       setArticle(content);
