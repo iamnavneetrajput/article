@@ -64,7 +64,6 @@ function ConnectivityBanner() {
 // Components
 import Dashboard from "./components/Dashboard";
 import BrandManager from "./components/BrandManager";
-import ModelManager from "./components/ModelManager";
 import ImportPanel from "./components/ImportPanel";
 import ArticleGenerator from "./components/ArticleGenerator";
 import GlobalSearch from "./components/GlobalSearch";
@@ -105,7 +104,6 @@ function Sidebar({
   const navItems = [
     { name: "Dashboard", path: "/", icon: LayoutDashboard },
     { name: "Brands & Models", path: "/brands", icon: Car },
-    { name: "Powertrains", path: "/models", icon: Database },
     { name: "Articles", path: "/articles", icon: FileText },
     { name: "JSON Importer", path: "/import", icon: Upload },
   ];
@@ -218,7 +216,7 @@ function Sidebar({
           </button>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1 pt-4 overflow-y-auto overflow-x-hidden no-scrollbar">
+        <nav className="flex-1 px-4 space-y-1 pt-4 overflow-y-auto no-scrollbar">
           <div className={cn("text-slate-500 text-[10px] uppercase font-bold tracking-widest px-2 mb-2", isCollapsed && "text-center")}>
             {isCollapsed ? "NAV" : "Navigation"}
           </div>
@@ -319,12 +317,12 @@ function Sidebar({
                     New users: Sign in to create your account.
                   </p>
                   <div className="flex flex-col gap-1.5 pt-1">
-                    {/* <button 
+                    <button 
                       onClick={openInNewTab}
                       className="w-full text-center text-[8px] text-blue-400 hover:text-blue-300 uppercase font-bold tracking-widest transition-colors flex items-center justify-center gap-1"
                     >
                       <Plus size={10} /> Dedicated Tab Login
-                    </button> */}
+                    </button>
                   </div>
                 </div>
               )}
@@ -381,7 +379,7 @@ function AppContent() {
             <div className="truncate shrink">
               <PageTitle />
             </div>
-            <span className="hidden lg:inline-block px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-[10px] font-bold rounded uppercase">by navneet</span>
+            <span className="hidden lg:inline-block px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-[10px] font-bold rounded uppercase">By Navneet</span>
           </div>
           <div className="flex items-center gap-2 md:gap-3">
             <GlobalSearch />
@@ -394,7 +392,6 @@ function AppContent() {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/brands" element={<BrandManager />} />
-                <Route path="/models" element={<ModelManager />} />
                 <Route path="/articles" element={<ArticleGenerator />} />
                 <Route path="/import" element={<ImportPanel />} />
                 {isAdmin && <Route path="/admin" element={<AdminDashboard />} />}
@@ -407,7 +404,7 @@ function AppContent() {
                 <div>
                   <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Access Restricted</h2>
                   <p className="mt-2 text-slate-500 leading-relaxed">
-                    This repository is restricted to registered system users. Please sign in using your credentials to continue.
+                    This repository is restricted to registered system users. Please sign in using your corporate credentials to continue.
                   </p>
                 </div>
                 <button 

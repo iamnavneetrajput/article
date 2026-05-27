@@ -40,7 +40,7 @@ export default function GlobalSearch() {
           id: d.id,
           name: d.data().name,
           type: "Brand",
-          path: "/brands"
+          path: `/brands?brandId=${d.id}`
         }));
 
         const models: FlatResult[] = modelSnap.docs.map(d => ({
@@ -48,7 +48,7 @@ export default function GlobalSearch() {
           name: d.data().name,
           parent: d.data().brandName || "Unknown Brand",
           type: "Model",
-          path: "/models"
+          path: `/brands?brandId=${d.data().brandId}&modelId=${d.id}`
         }));
 
         const pts: FlatResult[] = ptSnap.docs.map(d => ({
@@ -57,7 +57,7 @@ export default function GlobalSearch() {
           parent: d.data().brandName || "Unknown Brand",
           subParent: d.data().modelName || "Unknown Model",
           type: "Powertrain",
-          path: "/models"
+          path: `/brands?brandId=${d.data().brandId}&modelId=${d.data().modelId}`
         }));
 
         setAllData([...brands, ...models, ...pts]);
