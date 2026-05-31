@@ -24,7 +24,7 @@ export default function ArticleGenerator() {
   const { isAdmin } = useAuth();
 
   // Selection Mode State (Maintenance vs EV Range)
-  const [articleType, setArticleType] = useState<"service-cost" | "ev-range" | "fuel-efficiency">("service-cost");
+  const [articleType, setArticleType] = useState<"service-cost" | "ev-range">("service-cost");
 
   // Maintenance selection states
   const [brands, setBrands] = useState<any[]>([]);
@@ -63,7 +63,7 @@ export default function ArticleGenerator() {
         console.error("Failed to load EV range models from database:", err);
       }
     }
-    if (articleType === "ev-range" || articleType === "fuel-efficiency") {
+    if (articleType === "ev-range") {
       initEv();
     }
   }, [articleType]);
@@ -563,13 +563,13 @@ export default function ArticleGenerator() {
       content += `<b>Caption:</b>\n${fullVehicleName}\n\nReal-World Range City, Hwy Mileage Test\n\n`;
 
       content += `<p style="font-size: 11pt; font-weight: bold; margin: 0 0 8px 0;">Intro:</p>\n\n`;
-      content += `In this article, we'll present the data based on V3Cars' range test and inform you about what real-world range you can expect from the ${fullVehicleName} electric car in city and highway driving conditions. We'll also find out how much the range numbers deviate from the manufacturer-claimed range figures. The information presented in this article will also help you learn about the range differences you can expect when driving in the city vs driving on the highway.\n\n`;
+      content += `In this article, we'll present the data based on V3Cars' test and inform you about what real-world range you can expect from the ${fullVehicleName} electric car in city and highway driving conditions. We'll also find out how much the range numbers deviate from the manufacturer-claimed range figures. The information presented in this article will also help you learn about the range differences you can expect when driving in the city vs driving on the highway.\n\n`;
 
       content += `<p style="font-size: 11pt; font-weight: bold; margin: 0 0 8px 0;">Testing Method</p>\n\n`;
-      content += `<p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;">Before we provide the actual mileage of the ${fullVehicleName}, let's briefly explain our testing process so that you can decide if it matches your preferences, style and conditions for driving.\n\n <p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;">We use the charge-to-similar-charge method for our real-world electric range tests. First, we charge the car to over 80 percent, reset the trip meter, and then begin our 100km city drive in Delhi NCR traffic. The test is conducted on the same route during weekdays to simulate realistic city driving conditions, while maintaining the same load to keep the results consistent. We also maintain the cabin temperature between ${min_ac_temp}°C and ${max_ac_temp}°C during the test.\n\n <p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;"> For the city run, we use the highest regenerative braking setting available and enable one-pedal driving if the EV offers the feature. During the highway run, we select the adaptive or auto regenerative braking mode, where available, as it offers a more natural and relaxed cruising experience without requiring the driver to constantly manage regeneration levels for maximum efficiency. Across both city and highway tests, the drive mode is kept in Normal mode, since our goal is not to extract the highest possible efficiency figures, but to evaluate how the EV is likely to perform for most drivers in everyday driving situations.\n\n <p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;"> Once the city run is complete, we note the drop in battery percentage and reset the trip metre before starting the highway range test. For the highway run, we use the stretch around Sohna on the Delhi-Mumbai Expressway and drive the car for around ~100km. After completing both runs, we recharge the battery back to the same level from where the test began and note the total units consumed. We then use the battery percentage drop recorded during the city and highway runs, along with the units charged, to calculate the car's real-world range in both driving conditions.</p>\n\n`;
+      content += `<p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;">Before we provide the actual mileage of the ${fullVehicleName}, let's briefly explain our testing process so that you can decide if it matches your preferences, style and conditions for driving.\n\n <p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;">We use the charge-to-similar-charge method for our real-world electric range tests. First, we charge the car to over 80 percent, reset the trip metre, and then begin our 100km city drive in Delhi NCR traffic. The test is conducted on the same route during weekdays to simulate realistic city driving conditions, while maintaining the same load to keep the results consistent. We also maintain the cabin temperature between ${min_ac_temp}°C and ${max_ac_temp}°C during the test.\n\n <p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;"> For the city run, we use the highest regenerative braking setting available and enable one-pedal driving if the EV offers the feature. During the highway run, we select the adaptive or auto regenerative braking mode, where available, as it offers a more natural and relaxed cruising experience without requiring the driver to constantly manage regeneration levels for maximum efficiency. Across both city and highway tests, the drive mode is kept in Normal mode, since our goal is not to extract the highest possible efficiency figures, but to evaluate how the EV is likely to perform for most drivers in everyday driving situations.\n\n <p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;"> Once the city run is complete, we note the drop in battery percentage and reset the trip metre before starting the highway range test. For the highway run, we use the stretch around Sohna on the Delhi-Mumbai Expressway and drive the car for 100km. After completing both runs, we recharge the battery back to the same level from where the test began and note the total units consumed. We then use the battery percentage drop recorded during the city and highway runs, along with the units charged, to calculate the car's real-world range in both driving conditions.</p>\n\n`;
 
       content += `<h3 style="font-size: 14pt; font-weight: normal; margin: 15px 0 10px 0;">What Is The Actual City Range Of ${make} ${model}?</h3>\n\n`;
-      content += `Starting with a battery charge of ${battery_percentage} per cent, we drove the ${model} in the city traffic for ${city_distance_km}km. In our real-world city range test of ${model}, the battery percentage dropped by ${city_battery_level_drop_percentage}%. The displayed efficiency at the end of the run was ${city_displayed_kmpu.toFixed(2)}kmpu.\n\n`;
+      content += `Starting with a battery charge of ${battery_percentage} per cent, we drove the ${model} in the city traffic for roughly ${city_distance_km}km. In our real-world city range test of ${model}, the battery percentage dropped by ${city_battery_level_drop_percentage}%. The displayed efficiency at the end of the run was ${city_displayed_kmpu.toFixed(2)}kmpu.\n\n`;
 
       let cityTableHtml = `<div class="workshop-table-container">`;
       cityTableHtml += `<table ${s.table} cellpadding="0" cellspacing="0">`;
@@ -601,6 +601,7 @@ export default function ArticleGenerator() {
       highwayTableHtml += `</div>`;
       content += highwayTableHtml + `\n\n`;
 
+      content += `<p style="font-size: 11pt; font-weight: bold;" ${s.p}>Also Read:</p>\n\n`;
       content += `<p ${s.p}><b>Note:</b> If you want to buy a new car, <a href="https://www.v3cars.com/car-loan-emi-calculator"><u><i>Calculate Car Loan EMI</i></u></a> with <b>V3Cars</b>.</p>\n\n`;
 
       content += `<h3 style="font-size: 14pt; font-weight: normal; margin: 15px 0 10px 0;">Claimed Electric Range Vs Actual Highway/City Range Of ${make} ${model} — What's The Difference?</h3>\n\n`;
@@ -821,10 +822,6 @@ export default function ArticleGenerator() {
       content += `Per our calculations, depending on where you charge the ${make} ${model}, the per km cost of driving it in the city can range from Rs. ${home_cost_100_0_per_km.toFixed(2)} to Rs. ${public_cost_100_0_per_km.toFixed(2)}.\n\n`;
       content += `If your driving situation is completely on the highway instead, you will end up spending anywhere from Rs. ${home_cost_0_100_per_km.toFixed(3)}per km to Rs. ${public_cost_0_100_per_km.toFixed(3)}per km instead.\n\n`;
 
-      const ev_lower_higher_str = ((city_range + highway_range) / 2) < claimedRange ? "lower" : "higher";
-      content += `<h3>Conclusion:</h3>\n\n`;
-      content += `<p ${s.p}>The ${make} ${model} delivered a real-world range of ${city_range}km in city driving and ${highway_range}km on highways, which is ${ev_lower_higher_str} than its claimed range of ${claimedRange}km. For most users with mixed driving conditions, a practical full-charge range of around ${range_50_50_km}km can be expected. Despite the difference from the claimed figures, the ${make} ${model} remains an efficient EV with low running costs, making it a viable option for daily commuting and long-distance travel.</p>\n\n`;
-
       content += `<p ${s.p}>Find out how the complete list of real-world range of EVs tested by V3Cars:</p>\n\n`;
       content += `<p ${s.p}><b><i><a href="https://www.v3cars.com/news/ev-real-world-claimed-range-comparison">All V3Cars-Tested EV Cars Real-World Vs Claimed Range Comparison</a></b></i></p>\n\n`;
 
@@ -834,374 +831,6 @@ export default function ArticleGenerator() {
       await setDoc(doc(db, "articles", artId), {
         articleType: "ev-range",
         brandName: make,
-        modelName: model,
-        content,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-
-      setIsGenerating(false);
-    } catch (err: any) {
-      console.error(err);
-      setIsGenerating(false);
-    }
-  };
-
-  // GENERATE FUEL EFFICIENCY TEST ARTICLE
-  const generateFuelEfficiencyArticle = async () => {
-    if (!selectedEvId) return;
-    setIsGenerating(true);
-    try {
-      const ev = evModels.find(e => e.id === selectedEvId);
-      if (!ev) {
-        setIsGenerating(false);
-        return;
-      }
-
-      const checkVal = (v: any, fallback: string = "Data not available") => {
-        if (v === null || v === undefined || v === "") return fallback;
-        return String(v).trim();
-      };
-
-      const checkNum = (v: any, fallback: number = 0) => {
-        if (v === null || v === undefined || isNaN(Number(v)) || String(v).trim() === "") return fallback;
-        return Number(v);
-      };
-
-      const brand = checkVal(ev.brand);
-      const model = checkVal(ev.model);
-      const variant = checkVal(ev.variant, "");
-      const fuel_type = checkVal(ev.fuel_type);
-      const transmission = checkVal(ev.transmission);
-      const test_year = checkVal(ev.test_year);
-
-      const fuel_tank_capacity_l = checkNum(ev.fuel_tank_capacity_l);
-      const fuel_price_per_litre = checkNum(ev.fuel_price_per_litre);
-      const claimed_mileage_kmpl = checkNum(ev.claimed_mileage_kmpl);
-      const real_mileage_kmpl = checkNum(ev.real_mileage_kmpl);
-
-      const city_distance_km = checkNum(ev.city_distance_km, 100);
-      const city_time_hours = checkVal(ev.city_time_hours);
-      const city_avg_speed_kmph = checkNum(ev.city_avg_speed_kmph || ev.avg_city_speed_kmph);
-      const city_fuel_consumed_l = checkNum(ev.city_fuel_consumed_l);
-      const city_efficiency_kmpl = checkNum(ev.city_efficiency_kmpl);
-      const city_displayed_efficiency_kmpl = checkNum(ev.city_displayed_efficiency_kmpl);
-
-      const highway_distance_km = checkNum(ev.highway_distance_km, 100);
-      const highway_time_hours = checkVal(ev.highway_time_hours);
-      const highway_avg_speed_kmph = checkNum(ev.highway_avg_speed_kmph || ev.avg_highway_speed_kmph);
-      const highway_fuel_consumed_l = checkNum(ev.highway_fuel_consumed_l);
-      const highway_efficiency_kmpl = checkNum(ev.highway_efficiency_kmpl);
-      const highway_displayed_efficiency_kmpl = checkNum(ev.highway_displayed_efficiency_kmpl);
-
-      const city_deviation_percentage = checkNum(ev.city_deviation_percentage);
-      const highway_deviation_percentage = checkNum(ev.highway_deviation_percentage);
-
-      // --- CRITICAL DATA FORMATTING RULES ---
-      const formatTimeVal = (val: any): string => {
-        const str = String(val || "").trim();
-        if (!str) return "Data not available";
-        if (str.includes(":")) {
-          const parts = str.split(":");
-          const h = parseInt(parts[0], 10) || 0;
-          const m = parseInt(parts[1], 10) || 0;
-          if (h === 0) return `${m}mins`;
-          return `${h}${h > 1 ? "hrs" : "hr"} ${String(m).padStart(2, '0')}mins`;
-        }
-        const num = Number(str);
-        if (!isNaN(num)) {
-          // Handle colon-stripped times like 130 (1:30) or 400 (4:00)
-          if (num >= 100 && num <= 2400 && Number.isInteger(num)) {
-            const h = Math.floor(num / 100);
-            const m = num % 100;
-            if (h === 0) return `${m}mins`;
-            return `${h}${h > 1 ? "hrs" : "hr"} ${String(m).padStart(2, '0')}mins`;
-          }
-          const h = Math.floor(num);
-          const m = Math.round((num - h) * 60);
-          if (h === 0) return `${m}mins`;
-          return `${h}${h > 1 ? "hrs" : "hr"} ${String(m).padStart(2, '0')}mins`;
-        }
-        return str;
-      };
-
-      const formatDistanceVal = (val: number): string => {
-        return `${val}km`;
-      };
-
-      const formatSpeedVal = (val: number): string => {
-        return `${val}kmph`;
-      };
-
-      const formatMileageVal = (val: number): string => {
-        return `${val.toFixed(2)}kmpl`;
-      };
-
-      const formatFuelQty = (val: number): string => {
-        return `${val.toFixed(2)} litres`;
-      };
-
-      // Table formatting styling dictionary
-      const s = {
-        table: 'style="border-collapse: collapse; width: 100%; border: 1px solid #000; margin: 10px 0; font-family: Arial, sans-serif; background: #fff; line-height: 1.15; font-size: 10pt;"',
-        thTd: 'style="border: 1px solid #000; padding: 10px 8px; text-align: center; font-size: 10pt; vertical-align: middle; line-height: 1.15; color: #000; font-weight: normal;"',
-        td: 'style="border: 1px solid #000; padding: 10px 8px; text-align: center; vertical-align: middle; background-color: #ffffff; font-size: 10pt; line-height: 1.15;"',
-        p: 'style="line-height: 1.15; margin: 0; padding: 0;"'
-      };
-
-      // Resolve weighted efficiencies for splits
-      const getEffVal = (dbVal: any, cityWeight: number, hwyWeight: number) => {
-        if (dbVal !== undefined && dbVal !== null && dbVal !== 0 && !isNaN(Number(dbVal))) {
-          return Number(dbVal);
-        }
-        return (city_efficiency_kmpl * cityWeight + highway_efficiency_kmpl * hwyWeight);
-      };
-
-      const efficiency_0_100_kmpl = getEffVal(ev.efficiency_0_100_kmpl, 0, 1.0);
-      const efficiency_10_90_kmpl = getEffVal(ev.efficiency_10_90_kmpl, 0.1, 0.9);
-      const efficiency_20_80_kmpl = getEffVal(ev.efficiency_20_80_kmpl, 0.2, 0.8);
-      const efficiency_30_70_kmpl = getEffVal(ev.efficiency_30_70_kmpl, 0.3, 0.7);
-      const efficiency_40_60_kmpl = getEffVal(ev.efficiency_40_60_kmpl, 0.4, 0.6);
-      const efficiency_50_50_kmpl = getEffVal(ev.efficiency_50_50_kmpl, 0.5, 0.5);
-      const efficiency_60_40_kmpl = getEffVal(ev.efficiency_60_40_kmpl, 0.6, 0.4);
-      const efficiency_70_30_kmpl = getEffVal(ev.efficiency_70_30_kmpl, 0.7, 0.3);
-      const efficiency_80_20_kmpl = getEffVal(ev.efficiency_80_20_kmpl, 0.8, 0.2);
-      const efficiency_90_10_kmpl = getEffVal(ev.efficiency_90_10_kmpl, 0.9, 0.1);
-      const efficiency_100_0_kmpl = getEffVal(ev.efficiency_100_0_kmpl, 1.0, 0);
-
-      const getCostVal = (dbVal: any, efficiency: number) => {
-        if (dbVal !== undefined && dbVal !== null && dbVal !== 0 && !isNaN(Number(dbVal))) {
-          return Number(dbVal);
-        }
-        return efficiency > 0 ? (fuel_price_per_litre / efficiency) : 0;
-      };
-
-      const cost_0_100_per_km = getCostVal(ev.cost_0_100_per_km, efficiency_0_100_kmpl);
-      const cost_10_90_per_km = getCostVal(ev.cost_10_90_per_km, efficiency_10_90_kmpl);
-      const cost_20_80_per_km = getCostVal(ev.cost_20_80_per_km, efficiency_20_80_kmpl);
-      const cost_30_70_per_km = getCostVal(ev.cost_30_70_per_km, efficiency_30_70_kmpl);
-      const cost_40_60_per_km = getCostVal(ev.cost_40_60_per_km, efficiency_40_60_kmpl);
-      const cost_50_50_per_km = getCostVal(ev.cost_50_50_per_km, efficiency_50_50_kmpl);
-      const cost_60_40_per_km = getCostVal(ev.cost_60_40_per_km, efficiency_60_40_kmpl);
-      const cost_70_30_per_km = getCostVal(ev.cost_70_30_per_km, efficiency_70_30_kmpl);
-      const cost_80_20_per_km = getCostVal(ev.cost_80_20_per_km, efficiency_80_20_kmpl);
-      const cost_90_10_per_km = getCostVal(ev.cost_90_10_per_km, efficiency_90_10_kmpl);
-      const cost_100_0_per_km = getCostVal(ev.cost_100_0_per_km, efficiency_100_0_kmpl);
-
-      const getRangeVal = (dbVal: any, efficiency: number) => {
-        if (dbVal !== undefined && dbVal !== null && dbVal !== 0 && !isNaN(Number(dbVal))) {
-          return Math.round(Number(dbVal));
-        }
-        return Math.round(0.9 * fuel_tank_capacity_l * efficiency);
-      };
-
-      const range_0_100_km = getRangeVal(ev.range_0_100_km, efficiency_0_100_kmpl);
-      const range_10_90_km = getRangeVal(ev.range_10_90_km, efficiency_10_90_kmpl);
-      const range_20_80_km = getRangeVal(ev.range_20_80_km, efficiency_20_80_kmpl);
-      const range_30_70_km = getRangeVal(ev.range_30_70_km, efficiency_30_70_kmpl);
-      const range_40_60_km = getRangeVal(ev.range_40_60_km, efficiency_40_60_kmpl);
-      const range_50_50_km = getRangeVal(ev.range_50_50_km, efficiency_50_50_kmpl);
-      const range_60_40_km = getRangeVal(ev.range_60_40_km, efficiency_60_40_kmpl);
-      const range_70_30_km = getRangeVal(ev.range_70_30_km, efficiency_70_30_kmpl);
-      const range_80_20_km = getRangeVal(ev.range_80_20_km, efficiency_80_20_kmpl);
-      const range_90_10_km = getRangeVal(ev.range_90_10_km, efficiency_90_10_kmpl);
-      const range_100_0_km = getRangeVal(ev.range_100_0_km, efficiency_100_0_kmpl);
-
-      const range_min_km = ev.range_min_km ? Number(ev.range_min_km) : Math.min(range_100_0_km, range_0_100_km);
-      const range_max_km = ev.range_max_km ? Number(ev.range_max_km) : Math.max(range_100_0_km, range_0_100_km);
-      
-      // Strict generation for range_display using range_min_km + " - " + range_max_km + " km"
-      const range_display = (ev.range_display && String(ev.range_display).trim()) ? String(ev.range_display) : `${range_min_km} - ${range_max_km} km`;
-
-      const powertrain0 = `${fuel_type} ${transmission}`;
-      const hwy_to_city_diff_pct = city_efficiency_kmpl > 0 ? ((highway_efficiency_kmpl - city_efficiency_kmpl) / city_efficiency_kmpl) * 100 : 0;
-      const jumpOrDropText = hwy_to_city_diff_pct >= 0 ? "jump up" : "drop down";
-      const city_diff_kmpl = Math.abs(city_efficiency_kmpl - claimed_mileage_kmpl);
-      const cityEfficiencyComparison = city_efficiency_kmpl < claimed_mileage_kmpl ? "less efficient" : "more efficient";
-
-      const cityDevSignStr = city_deviation_percentage < 0 ? "lower" : "higher";
-      const cityDevTypeStr = city_deviation_percentage < 0 ? "drop" : "increase";
-      const cityDevEfficiencyStr = city_deviation_percentage < 0 ? "less efficient" : "more efficient";
-
-      const highwayDevSignStr = highway_deviation_percentage < 0 ? "lower" : "higher";
-      const highwayDevTypeStr = highway_deviation_percentage < 0 ? "drop" : "increase";
-      const highwayDevEfficiencyStr = highway_deviation_percentage < 0 ? "less efficient" : "more efficient";
-
-      const highway_diff_kmpl = Math.abs(highway_efficiency_kmpl - claimed_mileage_kmpl);
-      const highwayEfficiencyComparison = highway_efficiency_kmpl < claimed_mileage_kmpl ? "less" : "more";
-      const highwayDevSideWord = highway_deviation_percentage >= 0 ? "positive" : "negative";
-
-      // Extract min / max AC temp from string "23 to 25"
-      const acTempRaw = ev.ac_temperature_between || "23 to 25";
-      let min_ac_temp = "23";
-      let max_ac_temp = "25";
-      const parts = acTempRaw.split(/\s*to\s*|\s*-\s*/i);
-      if (parts.length >= 2) {
-        min_ac_temp = parts[0].trim();
-        max_ac_temp = parts[1].trim();
-      } else if (parts.length === 1 && parts[0]) {
-        min_ac_temp = parts[0].trim();
-        max_ac_temp = parts[0].trim();
-      }
-
-      let content = `<b>Author:</b> Navneet\n\n`;
-      content += `<b>URL:</b> ${slugify(`${brand}-${model}-${powertrain0}-real-city-highway-mileage-test`)}\n\n`;
-      content += `<b>Meta Title:</b> ${brand} ${model} ${powertrain0} Actual City, Highway Mileage Test\n\n`;
-      content += `<b>Title:</b> ${brand} ${model} ${powertrain0} Mileage Test: Real City, Highway Fuel Efficiency\n\n`;
-      content += `<b>Meta:</b> We have driven the ${brand} ${model} with the ${powertrain0} in city and highway conditions to find out what actual mileage you can expect in city driving and highway.\n\n`;
-      content += `<b>Image:</b> ${brand} ${model}\n\n`;
-      content += `<b>Caption:</b><br/>${powertrain0}<br/>City, Hwy Mileage Test<br/>\n\n`;
-      content += `<b>Social:</b><br/><br/>`;
-
-      content += `<p style="font-size: 11pt; font-weight: bold; margin: 0 0 8px 0;">Intro:</p>\n\n`;
-      content += `In this article, we’ll present the data based on V3Cars mileage test and inform you about what real-world fuel efficiency you can expect from the ${brand} ${model} ${powertrain0} in city and highway driving conditions. We’ll also find out how much the mileage numbers deviate from the manufacturer-claimed fuel efficiency figures. The information presented in this article will also help you learn about the mileage differences you can expect when driving in the city vs driving on the highway.\n\n`;
-
-      content += `<h3 style="font-size: 14pt; font-weight: bold; margin: 0 0 8px 0;">Testing Method</h3>\n\n`;
-      content += `<p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;">Before we provide the actual mileage of the ${brand} ${model} ${powertrain0}, let's briefly explain our testing process so that you can decide if it matches your preferences, style and conditions for driving.\n\n <p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;">We use the tank-full-to-tank-full method for our real-world fuel efficiency tests. First, we fill the fuel tank to the brim, reset the trip metre, and then begin our ~100km city drive in Delhi NCR traffic. The test is conducted on the same route during weekdays to simulate realistic city driving conditions, while maintaining the same load to keep the results consistent. We also maintain the cabin temperature between ${min_ac_temp}°C and ${max_ac_temp}°C during the test.\n\n <p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;">For both city and highway runs, the vehicle is driven in its Normal drive mode, where available, since our goal is not to extract the highest possible fuel efficiency figures, but to evaluate how the car is likely to perform for most drivers in everyday driving situations.\n\n <p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;">Once the city run is complete, we return to the fuel station, refill the tank to the same level and note the fuel consumed to calculate the city mileage. We then reset the trip metre before starting the highway mileage test. For the highway run, we use the stretch around Sohna on the Delhi-Mumbai Expressway and drive the car for around 100km at highway speeds representative of real-world usage. After completing the run, we once again refill the fuel tank to the same level and record the fuel consumed to calculate the highway mileage figure.</p>\n\n`;
-
-      content += `<h3 style="font-size: 14pt; font-weight: normal; margin: 15px 0 10px 0;">What Is The Actual City Mileage Of ${brand} ${model} ${powertrain0}?</h3>\n\n`;
-      content += `After driving the ${model} in the city traffic for about ${formatTimeVal(city_time_hours)}, we drove back to the fuel station. We covered ${formatDistanceVal(city_distance_km)} with an average speed of ${formatSpeedVal(city_avg_speed_kmph)}. During refuelling, we were able to fill up ${formatFuelQty(city_fuel_consumed_l)} of ${fuel_type} in the ${model} at a per litre ${fuel_type} price of Rs. ${fuel_price_per_litre.toFixed(2)}. Thus, the total bill stood at Rs. ${(city_fuel_consumed_l * fuel_price_per_litre).toFixed(2)} and in our real-world city mileage test of ${model} ${powertrain0}, we got a final fuel efficiency figure ${formatMileageVal(city_efficiency_kmpl)}.\n\n`;
-
-      content += `<h3 style="font-size: 14pt; font-weight: normal; margin: 15px 0 10px 0;">What Is The Real Highway Mileage Of ${brand} ${model} ${powertrain0}?</h3>\n\n`;
-      content += `With the tank filled to the brim once again, we headed out on the Delhi-Mumbai expressway to test the highway mileage of the ${model} ${powertrain0}. During the highway run, we cruised at 100kmph and managed to complete our ${formatDistanceVal(highway_distance_km)} drive in about ${formatTimeVal(highway_time_hours)}. So, our average speed during the highway mileage test of the ${model} was ${formatSpeedVal(highway_avg_speed_kmph)}. After the drive, we managed to fill up ${formatFuelQty(highway_fuel_consumed_l)} of ${fuel_type} in our ${model} and incurred a bill of Rs. ${(highway_fuel_consumed_l * fuel_price_per_litre).toFixed(2)} with a fuel price of Rs. ${fuel_price_per_litre.toFixed(2)} per litre in Gurgaon, Haryana. During our highway run of the ${brand} ${model} with the ${powertrain0} powertrain, we achieved a highway mileage of ${formatMileageVal(highway_efficiency_kmpl)}.\n\n`;
-
-      content += `<p ${s.p}><b>Note:</b> If you want to buy a new car, <a href="https://www.v3cars.com/car-loan-emi-calculator"><u><i>Calculate Car Loan EMI</i></u></a> with <b>V3Cars</b>.</p>\n\n`;
-
-      content += `<h3 style="font-size: 14pt; font-weight: normal; margin: 15px 0 10px 0;">Claimed Mileage Vs Actual Highway/City Mileage Of ${brand} ${model} Powertrain — What’s The Difference?</h3>\n\n`;
-      content += `Based on our mileage test, the ${model} ${powertrain0} gave us a city mileage of ${formatMileageVal(city_efficiency_kmpl)}. On the highways, you can expect this figure to ${jumpOrDropText} by ${Math.abs(hwy_to_city_diff_pct).toFixed(2)}% to ${formatMileageVal(highway_efficiency_kmpl)}, as we saw in our ${model} mileage test.\n\n`;
-
-      content += `Compared to the official claimed mileage figure of the ${model} ${powertrain0}, our ${model} ${powertrain0} city mileage turned out to be ${formatMileageVal(city_diff_kmpl)} ${cityEfficiencyComparison}. Thus, showing a ${Math.abs(city_deviation_percentage).toFixed(2)}% deviation from the claimed figure. With this fuel efficiency, you can expect to incur a per kilometre fuel cost of Rs. ${cost_100_0_per_km.toFixed(2)} if you drive mostly in the city traffic with a fuel cost of Rs. ${fuel_price_per_litre.toFixed(2)}.\n\n`;
-
-      // CLAIMED VS REAL MILEAGE COMPARISON TABLE
-      let comparisonTableHtml = `<div class="workshop-table-container">`;
-      comparisonTableHtml += `<table ${s.table} cellpadding="0" cellspacing="0">`;
-      comparisonTableHtml += `<thead>`;
-      comparisonTableHtml += `<tr><th colspan="2" style="border: 1px solid #000000; padding: 10px 8px; font-weight: bold; text-align: center; vertical-align: middle; font-size: 11pt;"><b>${brand.toUpperCase()} ${model.toUpperCase()} ${powertrain0.toUpperCase()}<br/>CLAIMED VS REAL MILEAGE COMPARISON</b></th></tr>`;
-      comparisonTableHtml += `<tr>`;
-      comparisonTableHtml += `<th ${s.thTd}><b>Parameter</b></th>`;
-      comparisonTableHtml += `<th ${s.thTd}><b>Values</b></th>`;
-      comparisonTableHtml += `</tr>`;
-      comparisonTableHtml += `</thead>`;
-      comparisonTableHtml += `<tbody>`;
-      comparisonTableHtml += `<tr><td ${s.td}><b>City Fuel Cost (per km)</b></td><td ${s.td}>Rs. ${cost_100_0_per_km.toFixed(2)}</td></tr>`;
-      comparisonTableHtml += `<tr><td ${s.td}><b>City Deviation</b></td><td ${s.td}>${Math.abs(city_deviation_percentage).toFixed(2)}%</td></tr>`;
-      comparisonTableHtml += `<tr><td ${s.td}><b>City Mileage</b></td><td ${s.td}>${formatMileageVal(city_efficiency_kmpl)}</td></tr>`;
-      comparisonTableHtml += `<tr><td ${s.td}><b>Difference</b></td><td ${s.td}>${formatMileageVal(city_diff_kmpl)} ${cityEfficiencyComparison}</td></tr>`;
-      comparisonTableHtml += `<tr><td ${s.td}><b><u>Claimed Mileage</u></b></td><td ${s.td}>${formatMileageVal(claimed_mileage_kmpl)}</td></tr>`;
-      comparisonTableHtml += `<tr><td ${s.td}><b>Difference</b></td><td ${s.td}>${formatMileageVal(highway_diff_kmpl)} ${highway_efficiency_kmpl < claimed_mileage_kmpl ? "less efficient" : "more efficient"}</td></tr>`;
-      comparisonTableHtml += `<tr><td ${s.td}><b>Highway Mileage</b></td><td ${s.td}>${formatMileageVal(highway_efficiency_kmpl)}</td></tr>`;
-      comparisonTableHtml += `<tr><td ${s.td}><b>Highway Deviation</b></td><td ${s.td}>${Math.abs(highway_deviation_percentage).toFixed(2)}%</td></tr>`;
-      comparisonTableHtml += `<tr><td ${s.td}><b>Hwy Fuel Cost (per km)</b></td><td ${s.td}>Rs. ${cost_0_100_per_km.toFixed(2)}</td></tr>`;
-      comparisonTableHtml += `</tbody>`;
-      comparisonTableHtml += `</table>`;
-      comparisonTableHtml += `</div>`;
-
-      content += comparisonTableHtml + `\n\n`;
-
-      content += `In terms of highway mileage, we achieved a figure of ${formatMileageVal(highway_efficiency_kmpl)} with the ${model} we drove. This number of ${formatMileageVal(highway_diff_kmpl)} is ${highwayEfficiencyComparison} than the claimed mileage figure. Thus, the deviation in the highway mileage of ${model} ${powertrain0} is about ${Math.abs(highway_deviation_percentage).toFixed(2)}% on the positive side. At this rate, you can expect to spend Rs. ${cost_0_100_per_km.toFixed(2)} per kilometre for predominantly highway driving during the ownership.\n\n`;
-
-      content += `<h3 style="font-size: 14pt; font-weight: normal; margin: 15px 0 10px 0;">${brand} ${model} ${powertrain0} — Actual City vs Highway Mileage, Custom Real Mileage, Fuel Cost Comparison</h3>\n\n`;
-      content += `If your driving happens entirely on the highways or just within the city, then you know what mileage you can expect from the ${brand} ${model} ${powertrain0}. However, for those who have a mixed usage, we have compiled combinations of effective mileage of ${model} ${powertrain0} based on the variations of city-highway driving ratio.\n\n`;
-      content += `Using this customised city-highway combinations, you can better gauge what fuel costs and realistic fuel efficiency you can expect from the ${model} with the ${powertrain0} powertrain.\n\n`;
-
-      let customMileageTableHtml = `<div class="workshop-table-container">`;
-      customMileageTableHtml += `<table ${s.table} cellpadding="0" cellspacing="0">`;
-      customMileageTableHtml += `<thead>`;
-      customMileageTableHtml += `<tr><th colspan="3" style="border: 1px solid #000000; padding: 10px 8px; font-weight: bold; text-align: center; vertical-align: middle; font-size: 11pt;"><b>${brand.toUpperCase()} ${model.toUpperCase()} ${powertrain0.toUpperCase()} — CUSTOM REAL MILEAGE ESTIMATE</b></th></tr>`;
-      customMileageTableHtml += `<tr>`;
-      customMileageTableHtml += `<th ${s.thTd}><b>City-Hwy Usage (% Split)</b></th>`;
-      customMileageTableHtml += `<th ${s.thTd}><b>Effective Mileage</b></th>`;
-      customMileageTableHtml += `<th ${s.thTd}><b>Per KM Fuel Cost</b></th>`;
-      customMileageTableHtml += `</tr>`;
-      customMileageTableHtml += `</thead>`;
-      customMileageTableHtml += `<tbody>`;
-
-      const mileageRows = [
-        { split: "0-100%", eff: efficiency_0_100_kmpl, cost: cost_0_100_per_km },
-        { split: "10-90%", eff: efficiency_10_90_kmpl, cost: cost_10_90_per_km },
-        { split: "20-80%", eff: efficiency_20_80_kmpl, cost: cost_20_80_per_km },
-        { split: "30-70%", eff: efficiency_30_70_kmpl, cost: cost_30_70_per_km },
-        { split: "40-60%", eff: efficiency_40_60_kmpl, cost: cost_40_60_per_km },
-        { split: "50-50%", eff: efficiency_50_50_kmpl, cost: cost_50_50_per_km },
-        { split: "60-40%", eff: efficiency_60_40_kmpl, cost: cost_60_40_per_km },
-        { split: "70-30%", eff: efficiency_70_30_kmpl, cost: cost_70_30_per_km },
-        { split: "80-20%", eff: efficiency_80_20_kmpl, cost: cost_80_20_per_km },
-        { split: "90-10%", eff: efficiency_90_10_kmpl, cost: cost_90_10_per_km },
-        { split: "100-0%", eff: efficiency_100_0_kmpl, cost: cost_100_0_per_km }
-      ];
-
-      mileageRows.forEach(r => {
-        customMileageTableHtml += `<tr>`;
-        customMileageTableHtml += `<td ${s.td}>${r.split}</td>`;
-        customMileageTableHtml += `<td ${s.td}>${formatMileageVal(r.eff)}</td>`;
-        customMileageTableHtml += `<td ${s.td}>Rs. ${r.cost.toFixed(2)}</td>`;
-        customMileageTableHtml += `</tr>`;
-      });
-      customMileageTableHtml += `</tbody>`;
-      customMileageTableHtml += `</table>`;
-      customMileageTableHtml += `</div>`;
-
-      content += customMileageTableHtml + `\n\n`;
-
-      content += `<p style="font-style: italic; font-size: 10pt; line-height: 1.15; margin: 0; padding: 0;">*City mileage: ${formatMileageVal(city_efficiency_kmpl)}; Highway mileage: ${formatMileageVal(highway_efficiency_kmpl)}; fuel cost in Gurgaon at the time of testing: Rs. ${fuel_price_per_litre.toFixed(2)}</p>\n\n`;
-
-      content += `Based on these combinations, for a 70% city and 30% highway usage, you can expect a real world mileage of ${formatMileageVal(efficiency_70_30_kmpl)} and a per kilometre fuel cost of Rs. ${cost_70_30_per_km.toFixed(2)} from the ${model}. With a flipped combination, where you drive the ${model} 70% on the highways and 30% in the city, you can should expect your real-world mileage figure to hover around ${formatMileageVal(efficiency_30_70_kmpl)} with fuel costs around Rs. ${cost_30_70_per_km.toFixed(2)}.\n\n`;
-
-      content += `For an even split of city and highway usage, your real fuel efficiency with the ${model} ${powertrain0} powertrain, your effective real mileage is likely to be closer to ${formatMileageVal(efficiency_50_50_kmpl)}. Thus, your per kilometre fuel costs could be around Rs. ${cost_50_50_per_km.toFixed(2)}.\n\n`;
-
-      content += `<h3 style="font-size: 14pt; font-weight: normal; margin: 15px 0 10px 0;">Real Driving Range (Full Tank Driving) Of ${brand} ${model} Powertrain For Your Driving Requirements</h3>\n\n`;
-      content += `The ${brand} ${model} with the ${powertrain0} powertrain comes with a ${fuel_tank_capacity_l}-litre fuel tank. With this capacity and our realisting mileage estimates, you can expect to get a range of ${range_display} depending on whether your driving is entirely within the city or on the highways.\n\n`;
-
-      content += `With a 70-30 driving split in favour of city usage, you can expect a full tank range of ${formatDistanceVal(range_70_30_km)} from the ${model}. However, if you flip the driving condition split to 30-70 in favour of highway, then you should expect a range ${formatDistanceVal(range_30_70_km)} with a full tank of fuel. On an even split of 50% city driving and 50% highway driving, you will have to refuel about every ${formatDistanceVal(range_50_50_km)}.\n\n`;
-
-      let customRangeTableHtml = `<div class="workshop-table-container">`;
-      customRangeTableHtml += `<table ${s.table} cellpadding="0" cellspacing="0">`;
-      customRangeTableHtml += `<thead>`;
-      customRangeTableHtml += `<tr><th colspan="2" style="border: 1px solid #000000; padding: 10px 8px; font-weight: bold; text-align: center; vertical-align: middle; font-size: 11pt;"><b>${brand.toUpperCase()} ${model.toUpperCase()} ${powertrain0.toUpperCase()}<br/>CUSTOM REALISTIC RANGE ON FULL TANK</b></th></tr>`;
-      customRangeTableHtml += `<tr>`;
-      customRangeTableHtml += `<th ${s.thTd}><b>City-Hwy Usage (% Split)</b></th>`;
-      customRangeTableHtml += `<th ${s.thTd}><b>Effective Range</b></th>`;
-      customRangeTableHtml += `</tr>`;
-      customRangeTableHtml += `</thead>`;
-      customRangeTableHtml += `<tbody>`;
-
-      const rangeRows = [
-        { split: "0-100%", range: range_0_100_km },
-        { split: "10-90%", range: range_10_90_km },
-        { range: range_20_80_km, split: "20-80%" },
-        { range: range_30_70_km, split: "30-70%" },
-        { range: range_40_60_km, split: "40-60%" },
-        { range: range_50_50_km, split: "50-50%" },
-        { range: range_60_40_km, split: "60-40%" },
-        { range: range_70_30_km, split: "70-30%" },
-        { range: range_80_20_km, split: "80-20%" },
-        { range: range_90_10_km, split: "90-10%" },
-        { range: range_100_0_km, split: "100-0%" }
-      ];
-
-      rangeRows.forEach(r => {
-        customRangeTableHtml += `<tr>`;
-        customRangeTableHtml += `<td ${s.td}>${r.split}</td>`;
-        customRangeTableHtml += `<td ${s.td}>${formatDistanceVal(r.range)}</td>`;
-        customRangeTableHtml += `</tr>`;
-      });
-      customRangeTableHtml += `</tbody>`;
-      customRangeTableHtml += `</table>`;
-      customRangeTableHtml += `</div>`;
-
-      content += customRangeTableHtml + `\n\n`;
-
-      content += `<p style="font-style: italic; font-size: 10pt; line-height: 1.15; margin: 0; padding: 0;">*Tank range estimated based on 90% fuel usage with 10% remaining in reserve</p>\n\n`;
-      content += `At the time of testing the ${brand} ${model} ${powertrain0}, each refuelling will cost you Rs. ${(0.9 * fuel_tank_capacity_l * fuel_price_per_litre).toFixed(2)} if you fill up 90%. This is assuming the fuel cost of Rs. ${fuel_price_per_litre.toFixed(2)} as of ${test_year} in Gurgaon, Haryana.\n\n`;
-
-      content += `<p style="font-size: 11pt; font-weight: bold;" ${s.p}>Also Read:</p>\n\n`;
-      content += `<p ${s.p}>Find out how you can get the best mileage or fuel efficiency from your car:</p>\n\n`;
-      content += `<p ${s.p}><a href="https://www.v3cars.com/car-guide/10-tips-to-get-better-mileage-from-your-petrol-diesel-or-cng-car"><b><i>10 Tips To Get Better Mileage From Your Petrol, Diesel Or CNG Car</i></b></a></p>\n\n`;
-      setArticle(content);
-
-      const artId = slugify(`${brand}-${model}-${fuel_type}-${transmission}-mileage-test`);
-      await setDoc(doc(db, "articles", artId), {
-        articleType: "fuel-efficiency",
-        brandName: brand,
         modelName: model,
         content,
         updatedAt: serverTimestamp()
@@ -1249,10 +878,8 @@ export default function ArticleGenerator() {
   const handleGenerateClick = () => {
     if (articleType === "service-cost") {
       generateArticle();
-    } else if (articleType === "ev-range") {
-      generateEvRangeArticle();
     } else {
-      generateFuelEfficiencyArticle();
+      generateEvRangeArticle();
     }
   };
 
@@ -1271,7 +898,7 @@ export default function ArticleGenerator() {
         {/* Selection Tabs */}
         <div className="flex bg-zinc-100 p-1.5 rounded-2xl border border-zinc-200/80 shadow-inner">
           <button
-            onClick={() => { setArticleType("service-cost"); setArticle(null); setSelectedEvId(""); }}
+            onClick={() => { setArticleType("service-cost"); setArticle(null); }}
             className={cn(
               "px-5 py-2.5 text-[10px] font-extrabold uppercase tracking-widest rounded-xl transition-all duration-200",
               articleType === "service-cost"
@@ -1282,7 +909,7 @@ export default function ArticleGenerator() {
             Periodic Service
           </button>
           <button
-            onClick={() => { setArticleType("ev-range"); setArticle(null); setSelectedEvId(""); }}
+            onClick={() => { setArticleType("ev-range"); setArticle(null); }}
             className={cn(
               "px-5 py-2.5 text-[10px] font-extrabold uppercase tracking-widest rounded-xl transition-all duration-200 flex items-center gap-1.5",
               articleType === "ev-range"
@@ -1292,18 +919,6 @@ export default function ArticleGenerator() {
           >
             <Database size={12} className={cn(articleType === "ev-range" ? "text-yellow-400" : "text-zinc-400")} />
             EV Range Test
-          </button>
-          <button
-            onClick={() => { setArticleType("fuel-efficiency"); setArticle(null); setSelectedEvId(""); }}
-            className={cn(
-              "px-5 py-2.5 text-[10px] font-extrabold uppercase tracking-widest rounded-xl transition-all duration-200 flex items-center gap-1.5",
-              articleType === "fuel-efficiency"
-                ? "bg-black text-white shadow-lg active:scale-95"
-                : "text-zinc-500 hover:text-zinc-900"
-            )}
-          >
-            <Database size={12} className={cn(articleType === "fuel-efficiency" ? "text-yellow-400" : "text-zinc-400")} />
-            Fuel Efficiency
           </button>
         </div>
       </div>
@@ -1351,30 +966,18 @@ export default function ArticleGenerator() {
         ) : (
           <div className="grid grid-cols-1 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block mb-1">
-                {articleType === "ev-range" ? "Select EV Model (Live Google Sheets Sync database)" : "Select Fuel Model (Live Google Sheets Sync database)"}
-              </label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block mb-1">Select EV Model (Live Google Sheets Sync database)</label>
               <select
                 value={selectedEvId}
                 onChange={(e) => { setSelectedEvId(e.target.value); setArticle(null); }}
                 className="w-full h-12 bg-zinc-50 hover:bg-zinc-100/70 focus:bg-white border border-zinc-200/80 focus:border-black/80 px-4 text-xs font-semibold uppercase tracking-wider focus:outline-none rounded-xl transition-all duration-200 shadow-sm focus:ring-2 focus:ring-black/5 text-zinc-800"
               >
-                <option value="">
-                  {articleType === "ev-range" ? "Choose EV Vehicle Model..." : "Choose Fuel Vehicle Model..."}
-                </option>
-                {evModels
-                  .filter(e => {
-                    if (articleType === "ev-range") {
-                      return e.sheetType === "ev" || (!e.sheetType && !e.fuel_type);
-                    } else {
-                      return e.sheetType === "fuel-efficiency" || e.fuel_type !== undefined;
-                    }
-                  })
-                  .map(e => (
-                    <option key={e.id} value={e.id}>
-                      {e.brand.toUpperCase()} {e.model.toUpperCase()} {e.variant ? `(${e.variant.toUpperCase()})` : ""} ({articleType === "ev-range" ? `Claimed: ${e.claimed_range_km}km, Real: ${e.real_range_km}km` : `Claimed: ${e.claimed_mileage_kmpl}kmpl, Real: ${e.real_mileage_kmpl}kmpl`})
-                    </option>
-                  ))}
+                <option value="">Choose EV Vehicle Model...</option>
+                {evModels.map(e => (
+                  <option key={e.id} value={e.id}>
+                    {e.brand.toUpperCase()} {e.model.toUpperCase()} (Claimed: {e.claimed_range_km}km, Real: {e.real_range_km}km)
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -1387,7 +990,7 @@ export default function ArticleGenerator() {
             onClick={handleGenerateClick}
             disabled={
               (articleType === "service-cost" && !selectedModel) ||
-              ((articleType === "ev-range" || articleType === "fuel-efficiency") && !selectedEvId) ||
+              (articleType === "ev-range" && !selectedEvId) ||
               isGenerating
             }
             className="group flex items-center justify-center gap-3 px-16 h-14 bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold text-xs uppercase tracking-[0.25em] disabled:opacity-40 disabled:hover:scale-100 disabled:hover:bg-yellow-400 transition-all duration-200 shadow-lg shadow-yellow-400/10 hover:shadow-xl hover:shadow-yellow-400/20 active:scale-95 rounded-2xl cursor-pointer"

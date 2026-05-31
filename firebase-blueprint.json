@@ -99,6 +99,48 @@
         "message": { "type": "string" }
       },
       "required": ["userId", "userEmail", "status"]
+    },
+    "EvRange": {
+      "title": "EV Range",
+      "description": "Scraped EV model range and efficiency parameters.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "brand": { "type": "string" },
+        "model": { "type": "string" },
+        "battery_kwh": { "type": "number" },
+        "claimed_range_km": { "type": "number" },
+        "real_range_km": { "type": "number" },
+        "scrapedAt": { "type": "string" }
+      },
+      "required": ["brand", "model"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "User with administrator access level",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "grantedAt": { "type": "object" },
+        "grantedBy": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Article": {
+      "title": "Article",
+      "description": "Search-optimized vehicle report or EV range article.",
+      "type": "object",
+      "properties": {
+        "brandId": { "type": "string" },
+        "brandName": { "type": "string" },
+        "modelId": { "type": "string" },
+        "modelName": { "type": "string" },
+        "content": { "type": "string" },
+        "articleType": { "type": "string" },
+        "updatedAt": { "type": "object" }
+      },
+      "required": ["content", "updatedAt"]
     }
   },
   "firestore": {
@@ -108,6 +150,9 @@
     "/serviceIntervals": { "schema": "ServiceInterval", "description": "Collection of maintenance intervals" },
     "/importLogs": { "schema": "ImportLog", "description": "Log of data import operations" },
     "/users": { "schema": "User", "description": "User profiles" },
-    "/accessRequests": { "schema": "AccessRequest", "description": "Requests for admin access" }
+    "/accessRequests": { "schema": "AccessRequest", "description": "Requests for admin access" },
+    "/evRangeData": { "schema": "EvRange", "description": "Google Sheets live synchronized EV models range database" },
+    "/admins": { "schema": "Admin", "description": "Privileged administrator profiles" },
+    "/articles": { "schema": "Article", "description": "Collection of compiled vehicle articles and range reports" }
   }
 }
