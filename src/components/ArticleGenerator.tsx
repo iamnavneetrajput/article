@@ -873,6 +873,9 @@ export default function ArticleGenerator() {
       const fuel_type = checkVal(ev.fuel_type);
       const transmission = checkVal(ev.transmission);
       const test_year = checkVal(ev.test_year);
+      const engine = checkVal(ev.engine, "").trim();
+      const displacement = checkVal(ev.displacement, "").trim();
+      const speed = checkVal(ev.speed, "").trim();
 
       const fuel_tank_capacity_l = checkNum(ev.fuel_tank_capacity_l);
       const fuel_price_per_litre = checkNum(ev.fuel_price_per_litre);
@@ -1012,7 +1015,21 @@ export default function ArticleGenerator() {
       // Strict generation for range_display using range_min_km + " - " + range_max_km + " km"
       const range_display = (ev.range_display && String(ev.range_display).trim()) ? String(ev.range_display) : `${range_min_km} - ${range_max_km} km`;
 
-      const powertrain0 = `${fuel_type} ${transmission}`;
+      const isManual = transmission.toLowerCase().includes("manual") || transmission.toLowerCase() === "manual" || transmission.toUpperCase() === "MT";
+      const transText = isManual ? "Manual" : "Automatic";
+      const transAbbreviation = isManual ? "MT" : "AT";
+      const urlTransmission = isManual ? "manual" : "automatic";
+      const urlSlug = slugify(`${brand}-${model}-${fuel_type}-${urlTransmission}-real-city-highway-mileage-test`);
+
+      const enginePart = engine ? `${engine} ` : "";
+      const metaTitle = `${brand} ${model} ${enginePart}${fuel_type}-${transAbbreviation} Actual City, Highway Mileage Test.`;
+
+      const speedPart = (!isManual && speed) ? ` (${speed})` : "";
+      const displacementPart = displacement ? `${displacement} ` : "";
+      const enginePartForH1 = engine ? `${engine} ` : "";
+
+      const powertrain0 = `${displacementPart}${engine ? engine.toLowerCase() + ' ' : ''}${fuel_type.toLowerCase()}-${transText.toLowerCase()}`;
+
       const hwy_to_city_diff_pct = city_efficiency_kmpl > 0 ? ((highway_efficiency_kmpl - city_efficiency_kmpl) / city_efficiency_kmpl) * 100 : 0;
       const jumpOrDropText = hwy_to_city_diff_pct >= 0 ? "jump up" : "drop down";
       const city_diff_kmpl = Math.abs(city_efficiency_kmpl - claimed_mileage_kmpl);
@@ -1043,32 +1060,48 @@ export default function ArticleGenerator() {
         max_ac_temp = parts[0].trim();
       }
 
+      const h1 = `${brand} ${model} ${displacementPart}${enginePartForH1}${fuel_type}-${transText}${speedPart} Mileage Test: Real City, Highway Fuel Efficiency`;
+      
+      const metaDescription = `We have driven the ${brand} ${model} with the ${displacementPart}${engine ? engine.toLowerCase() + ' ' : ''}${fuel_type.toLowerCase()}-${transText.toLowerCase()}${speedPart} in city and highway conditions to find out what actual mileage you can expect in city driving and highway.`;
+
       let content = `<b>Author:</b> Navneet\n\n`;
-      content += `<b>URL:</b> ${slugify(`${brand}-${model}-${powertrain0}-real-city-highway-mileage-test`)}\n\n`;
-      content += `<b>Meta Title:</b> ${brand} ${model} ${powertrain0} Actual City, Highway Mileage Test\n\n`;
-      content += `<h1 style="font-size: 20pt; font-weight: normal; margin: 15px 0 10px 0;">${brand} ${model} ${powertrain0} Mileage Test: Real City, Highway Fuel Efficiency </h1>\n\n`;
-      content += `<b>Meta:</b> We have driven the ${brand} ${model} with the ${powertrain0} in city and highway conditions to find out what actual mileage you can expect in city driving and highway.\n\n`;
+      content += `<b>URL:</b> ${urlSlug}\n\n`;
+      content += `<b>Meta Title:</b> ${metaTitle}\n\n`;
+      content += `<h1 style="font-size: 20pt; font-weight: normal; margin: 15px 0 10px 0;">${h1}</h1>\n\n`;
+      content += `<b>Meta:</b> ${metaDescription}\n\n`;
       content += `<b>Image:</b> ${brand} ${model}\n\n`;
-      content += `<b>Caption:</b><br/>${powertrain0}<br/>City, Hwy Mileage Test<br/>\n\n`;
+      content += `<b>Caption:</b><br/>${model} ${fuel_type} ${transText}<br/>City, Hwy Mileage Test<br/>\n\n`;
 
       content += `<p style="font-size: 11pt; font-weight: bold; margin: 0 0 8px 0;">Intro:</p>\n\n`;
       content += `In this article, we’ll present the data based on V3Cars mileage test and inform you about what real-world fuel efficiency you can expect from the ${brand} ${model} ${powertrain0} in city and highway driving conditions. We’ll also find out how much the mileage numbers deviate from the manufacturer-claimed fuel efficiency figures. The information presented in this article will also help you learn about the mileage differences you can expect when driving in the city vs driving on the highway.\n\n`;
 
-      content += `<h2 style="font-size: 14pt; font-weight: normal; margin: 0 0 8px 0;">Testing Method</h2>\n\n`;
-      content += `<p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;">Before we provide the actual mileage of the ${brand} ${model} ${powertrain0}, let's briefly explain our testing process so that you can decide if it matches your preferences, style and conditions for driving.\n\n <p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;">We use the tank-full-to-tank-full method for our real-world fuel efficiency tests. First, we fill the fuel tank to the brim, reset the trip metre, and then begin our ~100km city drive in Delhi NCR traffic. The test is conducted on the same route during weekdays to simulate realistic city driving conditions, while maintaining the same load to keep the results consistent.\n\n <p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;">For both city and highway runs, the vehicle is driven in its Normal drive mode, where available, since our goal is not to extract the highest possible fuel efficiency figures, but to evaluate how the car is likely to perform for most drivers in everyday driving situations.\n\n <p style="font-style: italic; font-size: 11pt; margin: 0 0 8px 0;">Once the city run is complete, we return to the fuel station, refill the tank to the same level and note the fuel consumed to calculate the city mileage. We then reset the trip metre before starting the highway mileage test. For the highway run, we use the stretch around Sohna on the Delhi-Mumbai Expressway and drive the car for around 100km at highway speeds representative of real-world usage. After completing the run, we once again refill the fuel tank to the same level and record the fuel consumed to calculate the highway mileage figure.</p>\n\n`;
+      content += `<h2 style="font-size: 14pt; font-weight: normal; margin: 15px 0 10px 0;">Testing Method & Flat Fuel Price Assumption</h2>\n\n`;
+      content += `<p style="font-size: 11pt; margin: 0 0 12px 0;">Before we provide the actual mileage of the ${brand} ${model} ${powertrain0}, let's briefly explain our testing process so that you can decide if it matches your preferences, style and conditions for driving.</p>\n\n`;
+      content += `<p style="font-size: 11pt; margin: 0 0 12px 0;">We use the tank-full-to-tank-full method for our real-world fuel efficiency tests. First, we fill the fuel tank to the brim, reset the trip metre, and then begin our ~100km city drive in Delhi NCR traffic. The test is conducted on the same route during weekdays to simulate realistic city driving conditions, while maintaining the same load to keep the results consistent.</p>\n\n`;
+      content += `<p style="font-size: 11pt; margin: 0 0 12px 0;">For both city and highway runs, the vehicle is driven in its Normal drive mode, where available, since our goal is not to extract the highest possible fuel efficiency figures, but to evaluate how the car is likely to perform for most drivers in everyday driving situations.</p>\n\n`;
+      content += `<p style="font-size: 11pt; margin: 0 0 12px 0;">Once the city run is complete, we return to the fuel station, refill the tank to the same level and note the fuel consumed to calculate the city mileage. We then reset the trip metre before starting the highway mileage test. For the highway run, we choose the stretch around Sohna along the Delhi-Mumbai expressway and we drive it for 100km at a cruising speed of around 100kmph. Then, we refill and note down the trip metre readings to calculate the highway mileage figure.</p>\n\n`;
+      content += `<p style="font-size: 11pt; margin: 0 0 12px 0;">For fuel prices, we assume a flat cost of Rs. 105.00 per litre for petrol, Rs. 100.00 per litre for diesel and Rs. 95.00 for CNG. This is done to bring our calculations and cost-per-km estimations closer to a national average price of the respective fuel type. For instance, using a very low price of CNG, as applicable in Delhi, skews the final verdict in favour of CNG vehicles even though CNG is quite expensive in most states.</p>\n\n`;
 
-      content += `<h2 style="font-size: 16pt; font-weight: normal; margin: 15px 0 10px 0;">What Is The Actual City Mileage Of ${brand} ${model} ${powertrain0}?</h2>\n\n`;
-      content += `After driving the ${model} in the city traffic for about ${formatTimeVal(city_time_hours)}, we drove back to the fuel station. We covered ${formatDistanceVal(city_distance_km)} with an average speed of ${formatSpeedVal(city_avg_speed_kmph)}. During refuelling, we were able to fill up ${formatFuelQty(city_fuel_consumed_l)} of ${fuel_type} in the ${model} at a per litre ${fuel_type} price of Rs. ${fuel_price_per_litre.toFixed(2)}. Thus, the total bill stood at Rs. ${(city_fuel_consumed_l * fuel_price_per_litre).toFixed(2)} and in our real-world city mileage test of ${model} ${powertrain0}, we got a final fuel efficiency figure ${formatMileageVal(city_efficiency_kmpl)}.\n\n`;
+      // Helper function to format currency dynamically with commas
+      const formatCurrency = (val: number) => {
+        return val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      };
 
-      content += `<h2 style="font-size: 16pt; font-weight: normal; margin: 15px 0 10px 0;">What Is The Real Highway Mileage Of ${brand} ${model} ${powertrain0}?</h2>\n\n`;
-      content += `With the tank filled to the brim once again, we headed out on the Delhi-Mumbai expressway to test the highway mileage of the ${model} ${powertrain0}. During the highway run, we cruised at 100kmph and managed to complete our ${formatDistanceVal(highway_distance_km)} drive in about ${formatTimeVal(highway_time_hours)}. So, our average speed during the highway mileage test of the ${model} was ${formatSpeedVal(highway_avg_speed_kmph)}. After the drive, we managed to fill up ${formatFuelQty(highway_fuel_consumed_l)} of ${fuel_type} in our ${model} and incurred a bill of Rs. ${(highway_fuel_consumed_l * fuel_price_per_litre).toFixed(2)} with a fuel price of Rs. ${fuel_price_per_litre.toFixed(2)} per litre in Gurgaon, Haryana. During our highway run of the ${brand} ${model} with the ${powertrain0} powertrain, we achieved a highway mileage of ${formatMileageVal(highway_efficiency_kmpl)}.\n\n`;
+      const transTextCap = transText; // e.g. "Automatic" or "Manual"
+      const capitalizedFuelType = fuel_type.charAt(0).toUpperCase() + fuel_type.slice(1).toLowerCase(); // e.g. "Diesel"
+
+      content += `<h2 style="font-size: 16pt; font-weight: normal; margin: 15px 0 10px 0;">What Is The Actual City Mileage Of ${brand} ${model} ${displacementPart}${enginePartForH1}${capitalizedFuelType}-${transTextCap}?</h2>\n\n`;
+      content += `After driving the ${model} in the city traffic for about ${formatTimeVal(city_time_hours)}, we drove back to the fuel station. We covered ${formatDistanceVal(city_distance_km)} with an average speed of ${formatSpeedVal(city_avg_speed_kmph)}. During refuelling, we were able to fill up ${formatFuelQty(city_fuel_consumed_l)} of ${fuel_type.toLowerCase()} in the ${model} at a per litre ${fuel_type.toLowerCase()} price of Rs. ${fuel_price_per_litre.toFixed(2)}. Thus, the total bill stood at Rs. ${formatCurrency(city_fuel_consumed_l * fuel_price_per_litre)} and in our real-world city mileage test of ${model} ${displacementPart.toLowerCase()}${engine ? engine.toLowerCase() + ' ' : ''}${fuel_type.toLowerCase()}-${transText.toLowerCase()}, we got a final fuel efficiency figure of ${formatMileageVal(city_efficiency_kmpl)}.\n\n`;
+
+      content += `<h2 style="font-size: 16pt; font-weight: normal; margin: 15px 0 10px 0;">What Is The Real Highway Mileage Of ${brand} ${model} ${displacementPart}${enginePartForH1}${capitalizedFuelType}-${transTextCap}?</h2>\n\n`;
+      content += `With the tank filled to the brim once again, we headed out on the Delhi-Mumbai expressway to test the highway mileage of the ${model} ${displacementPart.toLowerCase()}${engine ? engine.toLowerCase() + ' ' : ''}${fuel_type.toLowerCase()}-${transText.toLowerCase()}. We managed to complete our ${formatDistanceVal(highway_distance_km)} drive in about ${formatTimeVal(highway_time_hours)}, meaning our average speed during the highway mileage test of the ${model} was ${formatSpeedVal(highway_avg_speed_kmph)}. After the drive, we filled up ${formatFuelQty(highway_fuel_consumed_l)} of ${capitalizedFuelType}, incurring a bill of Rs. ${formatCurrency(highway_fuel_consumed_l * fuel_price_per_litre)} if you assume a fuel price of Rs. ${fuel_price_per_litre.toFixed(2)} per litre. During our highway run of the ${brand} ${model} with the ${fuel_type.toLowerCase()}-${transText.toLowerCase()}, we achieved a highway mileage of ${formatMileageVal(highway_efficiency_kmpl)}.\n\n`;
 
       content += `<p ${s.p}><b>Note:</b> If you want to buy a new car, <a href="https://www.v3cars.com/car-loan-emi-calculator"><u><i>Calculate Car Loan EMI</i></u></a> with <b>V3Cars</b>.</p>\n\n`;
 
-      content += `<h2 style="font-size: 16pt; font-weight: normal; margin: 15px 0 10px 0;">Claimed Mileage Vs Actual Highway/City Mileage Of ${brand} ${model} Powertrain — What’s The Difference?</h3>\n\n`;
-      content += `Based on our mileage test, the ${model} ${powertrain0} gave us a city mileage of ${formatMileageVal(city_efficiency_kmpl)}. On the highways, you can expect this figure to ${jumpOrDropText} by ${Math.abs(hwy_to_city_diff_pct).toFixed(2)}% to ${formatMileageVal(highway_efficiency_kmpl)}, as we saw in our ${model} mileage test.\n\n`;
+      content += `<h2 style="font-size: 16pt; font-weight: normal; margin: 15px 0 10px 0;">Claimed Mileage Vs Actual Highway/City Mileage Of ${brand} ${model} ${displacementPart}${enginePartForH1}${capitalizedFuelType}-${transTextCap}${speedPart} — What’s The Difference?</h2>\n\n`;
+      content += `Based on our mileage test, the ${model} ${fuel_type.toLowerCase()}-${transText.toLowerCase()} gave us a city mileage of ${formatMileageVal(city_efficiency_kmpl)}. On the highways, you can expect this figure to ${jumpOrDropText} by ${Math.abs(hwy_to_city_diff_pct).toFixed(2)}% to ${formatMileageVal(highway_efficiency_kmpl)}, as we saw in our ${model} mileage test.\n\n`;
 
-      content += `Compared to the official claimed mileage figure of the ${model} ${powertrain0}, our ${model} ${powertrain0} city mileage turned out to be ${formatMileageVal(city_diff_kmpl)} ${cityEfficiencyComparison}. Thus, showing a ${Math.abs(city_deviation_percentage).toFixed(2)}% deviation from the claimed figure. With this fuel efficiency, you can expect to incur a per kilometre fuel cost of Rs. ${cost_100_0_per_km.toFixed(2)} if you drive mostly in the city traffic with a fuel cost of Rs. ${fuel_price_per_litre.toFixed(2)}.\n\n`;
+      content += `Compared to the official claimed mileage figure of the ${model} ${fuel_type.toLowerCase()}-${transText.toLowerCase()}, our ${model} ${fuel_type.toLowerCase()}-${transText.toLowerCase()} city mileage turned out to be ${formatMileageVal(city_diff_kmpl)} ${cityEfficiencyComparison}. Thus, showing a ${Math.abs(city_deviation_percentage).toFixed(2)}% deviation from the claimed figure. With this fuel efficiency, you can expect to incur a per kilometre fuel cost of Rs. ${cost_100_0_per_km.toFixed(2)} if you drive mostly in the city traffic with a fuel cost of Rs. ${fuel_price_per_litre.toFixed(2)}.\n\n`;
 
       // CLAIMED VS REAL MILEAGE COMPARISON TABLE
       let comparisonTableHtml = `<div class="workshop-table-container">`;
@@ -1096,16 +1129,16 @@ export default function ArticleGenerator() {
 
       content += comparisonTableHtml + `\n\n`;
 
-      content += `In terms of highway mileage, we achieved a figure of ${formatMileageVal(highway_efficiency_kmpl)} with the ${model} we drove. This number of ${formatMileageVal(highway_diff_kmpl)} is ${highwayEfficiencyComparison} than the claimed mileage figure. Thus, the deviation in the highway mileage of ${model} ${powertrain0} is about ${Math.abs(highway_deviation_percentage).toFixed(2)}% on the positive side. At this rate, you can expect to spend Rs. ${cost_0_100_per_km.toFixed(2)} per kilometre for predominantly highway driving during the ownership.\n\n`;
+      content += `In terms of highway mileage, we achieved a figure of ${formatMileageVal(highway_efficiency_kmpl)} with the ${model} we drove. This number of ${formatMileageVal(highway_diff_kmpl)} is ${highwayEfficiencyComparison} than the claimed mileage figure. Thus, the deviation in the highway mileage of the ${model} ${fuel_type.toLowerCase()}-${transText.toLowerCase()} is about ${Math.abs(highway_deviation_percentage).toFixed(2)}% on the positive side. At this rate, you can expect to spend Rs. ${cost_0_100_per_km.toFixed(2)} per kilometre for predominantly highway driving during the ownership.\n\n`;
 
-      content += `<h3 style="font-size: 14pt; font-weight: normal; margin: 15px 0 10px 0;">${brand} ${model} ${powertrain0} — Actual City vs Highway Mileage, Custom Real Mileage, Fuel Cost Comparison</h3>\n\n`;
-      content += `If your driving happens entirely on the highways or just within the city, then you know what mileage you can expect from the ${brand} ${model} ${powertrain0}. However, for those who have a mixed usage, we have compiled combinations of effective mileage of ${model} ${powertrain0} based on the variations of city-highway driving ratio.\n\n`;
-      content += `Using this customised city-highway combinations, you can better gauge what fuel costs and realistic fuel efficiency you can expect from the ${model} with the ${powertrain0} powertrain.\n\n`;
+      content += `<h3 style="font-size: 14pt; font-weight: normal; margin: 15px 0 10px 0;">${brand} ${model} ${displacementPart}${enginePartForH1}${capitalizedFuelType}-${transTextCap}${speedPart} — Actual City vs Highway Mileage, Custom Real Mileage, Fuel Cost Comparison</h3>\n\n`;
+      content += `If your driving happens entirely on the highways or just within the city, then you know what mileage you can expect from the ${brand} ${model} ${fuel_type.toLowerCase()}-${transText.toLowerCase()}. However, for those who have a mixed usage, we have compiled combinations of effective mileage of ${model} ${fuel_type.toLowerCase()}-${transText.toLowerCase()} based on the variations of city-highway driving ratio.\n\n`;
+      content += `Using this customised city-highway combinations, you can better gauge what fuel costs and realistic fuel efficiency you can expect from the ${model} with the ${capitalizedFuelType}-${transTextCap} powertrain.\n\n`;
 
       let customMileageTableHtml = `<div class="workshop-table-container">`;
       customMileageTableHtml += `<table ${s.table} cellpadding="0" cellspacing="0">`;
       customMileageTableHtml += `<thead>`;
-      customMileageTableHtml += `<tr><th colspan="3" style="border: 1px solid #000000; padding: 10px 8px; font-weight: bold; text-align: center; vertical-align: middle; font-size: 11pt;"><b>${brand.toUpperCase()} ${model.toUpperCase()} ${powertrain0.toUpperCase()} — CUSTOM REAL MILEAGE ESTIMATE</b></th></tr>`;
+      customMileageTableHtml += `<tr><th colspan="3" style="border: 1px solid #000000; padding: 10px 8px; font-weight: bold; text-align: center; vertical-align: middle; font-size: 11pt;"><b>${brand.toUpperCase()} ${model.toUpperCase()} ${powertrain0.toUpperCase()}<br/>CUSTOM REAL MILEAGE ESTIMATE</b></th></tr>`;
       customMileageTableHtml += `<tr>`;
       customMileageTableHtml += `<th ${s.thTd}><b>City-Hwy Usage (% Split)</b></th>`;
       customMileageTableHtml += `<th ${s.thTd}><b>Effective Mileage</b></th>`;
@@ -1141,16 +1174,16 @@ export default function ArticleGenerator() {
 
       content += customMileageTableHtml + `\n\n`;
 
-      content += `<p style="font-style: italic; font-size: 10pt; line-height: 1.15; margin: 0; padding: 0;">*City mileage: ${formatMileageVal(city_efficiency_kmpl)}; Highway mileage: ${formatMileageVal(highway_efficiency_kmpl)}; fuel cost in Gurgaon at the time of testing: Rs. ${fuel_price_per_litre.toFixed(2)}</p>\n\n`;
+      content += `<p style="font-style: italic; font-size: 10pt; line-height: 1.15; margin: 0; padding: 0;">*City mileage: ${formatMileageVal(city_efficiency_kmpl)}; Highway mileage: ${formatMileageVal(highway_efficiency_kmpl)}<br/>*To accommodate varying fuel prices across the country, and to make the cost per kilometer information a bit more relevant for a larger number of potential car buyers, we are assuming a fixed fuel cost of Rs. 105.00 per litre for petrol and Rs. 100.00 per litre for diesel</p>\n\n`;
 
       content += `Based on these combinations, for a 70% city and 30% highway usage, you can expect a real world mileage of ${formatMileageVal(efficiency_70_30_kmpl)} and a per kilometre fuel cost of Rs. ${cost_70_30_per_km.toFixed(2)} from the ${model}. With a flipped combination, where you drive the ${model} 70% on the highways and 30% in the city, you can should expect your real-world mileage figure to hover around ${formatMileageVal(efficiency_30_70_kmpl)} with fuel costs around Rs. ${cost_30_70_per_km.toFixed(2)}.\n\n`;
 
       content += `For an even split of city and highway usage, your real fuel efficiency with the ${model} ${powertrain0} powertrain, your effective real mileage is likely to be closer to ${formatMileageVal(efficiency_50_50_kmpl)}. Thus, your per kilometre fuel costs could be around Rs. ${cost_50_50_per_km.toFixed(2)}.\n\n`;
 
-      content += `<h3 style="font-size: 14pt; font-weight: normal; margin: 15px 0 10px 0;">Real Driving Range (Full Tank Driving) Of ${brand} ${model} Powertrain For Your Driving Requirements</h3>\n\n`;
-      content += `The ${brand} ${model} with the ${powertrain0} powertrain comes with a ${fuel_tank_capacity_l}-litre fuel tank. With this capacity and our realisting mileage estimates, you can expect to get a range of ${range_display} depending on whether your driving is entirely within the city or on the highways.\n\n`;
+      content += `<h3 style="font-size: 14pt; font-weight: normal; margin: 15px 0 10px 0;">Real Driving Range (Full Tank Driving) Of ${brand} ${model} ${capitalizedFuelType}-${transTextCap} For Your Driving Requirements</h3>\n\n`;
+      content += `The ${brand} ${model} with the ${powertrain0} comes with a ${fuel_tank_capacity_l}-litre fuel tank. With this capacity and our realistic mileage estimates, you can expect to get a range of ${range_display} depending on whether your driving is entirely within the city or on the highways.\n\n`;
 
-      content += `With a 70-30 driving split in favour of city usage, you can expect a full tank range of ${formatDistanceVal(range_70_30_km)} from the ${model}. However, if you flip the driving condition split to 30-70 in favour of highway, then you should expect a range ${formatDistanceVal(range_30_70_km)} with a full tank of fuel. On an even split of 50% city driving and 50% highway driving, you will have to refuel about every ${formatDistanceVal(range_50_50_km)}.\n\n`;
+      content += `With a 70-30 driving split in favour of city usage, you can expect a full tank range of ${formatDistanceVal(range_70_30_km)} from the ${model}. However, if you flip the driving condition to 30-70 in favour of highway, then you can expect a range of ${formatDistanceVal(range_30_70_km)} with a full tank of fuel. On an even split of 50% city driving and 50% highway driving, you will have to refuel about every ${formatDistanceVal(range_50_50_km)}.\n\n`;
 
       let customRangeTableHtml = `<div class="workshop-table-container">`;
       customRangeTableHtml += `<table ${s.table} cellpadding="0" cellspacing="0">`;
@@ -1190,7 +1223,7 @@ export default function ArticleGenerator() {
       content += customRangeTableHtml + `\n\n`;
 
       content += `<p style="font-style: italic; font-size: 10pt; line-height: 1.15; margin: 0; padding: 0;">*Tank range estimated based on 90% fuel usage with 10% remaining in reserve</p>\n\n`;
-      content += `At the time of testing the ${brand} ${model} ${powertrain0}, each refuelling will cost you Rs. ${(0.9 * fuel_tank_capacity_l * fuel_price_per_litre).toFixed(2)} if you fill up 90%. This is assuming the fuel cost of Rs. ${fuel_price_per_litre.toFixed(2)} as of ${test_year} in Gurgaon, Haryana.\n\n`;
+      content += `At the time of testing the ${brand} ${model} ${displacementPart}${engine ? engine.toLowerCase() + ' ' : ''}${fuel_type.toLowerCase()} ${transText.toLowerCase()}, each refuelling will cost you Rs. ${formatCurrency(0.9 * fuel_tank_capacity_l * fuel_price_per_litre)} if you fill up 90%. This is assuming the fuel cost of Rs. ${fuel_price_per_litre.toFixed(2)} per litre of ${fuel_type.toLowerCase()}.\n\n`;
 
       content += `<p style="font-size: 11pt; font-weight: bold;" ${s.p}>Also Read:</p>\n\n`;
       content += `<p ${s.p}>Find out how you can get the best mileage or fuel efficiency from your car:</p>\n\n`;
@@ -1371,7 +1404,7 @@ export default function ArticleGenerator() {
                   })
                   .map(e => (
                     <option key={e.id} value={e.id}>
-                      {e.brand.toUpperCase()} {e.model.toUpperCase()} {e.variant ? `(${e.variant.toUpperCase()})` : ""} ({articleType === "ev-range" ? `Claimed: ${e.claimed_range_km}km, Real: ${e.real_range_km}km` : `Claimed: ${e.claimed_mileage_kmpl}kmpl, Real: ${e.real_mileage_kmpl}kmpl`})
+                      [Rank: {e.rank || "—"}] {e.brand.toUpperCase()} {e.model.toUpperCase()} {e.variant ? `(${e.variant.toUpperCase()})` : ""} {e.test_year ? `(Tested: ${e.test_year})` : ""} ({articleType === "ev-range" ? `Claimed: ${e.claimed_range_km}km, Real: ${e.real_range_km}km` : `Claimed: ${e.claimed_mileage_kmpl}kmpl, Real: ${e.real_mileage_kmpl}kmpl`})
                     </option>
                   ))}
               </select>

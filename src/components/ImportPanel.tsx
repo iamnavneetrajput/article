@@ -254,10 +254,16 @@ export default function ImportPanel() {
         const h = headers[j];
         if (h) {
           rowObj[h] = values[j] || "";
+          const lowerH = h.toLowerCase().trim();
+          rowObj[lowerH] = values[j] || "";
         }
       }
       
-      if (rowObj.id) {
+      // Support case-insensitive key 'id'
+      const idKey = Object.keys(rowObj).find(k => k.toLowerCase().trim() === "id");
+      const idValue = idKey ? rowObj[idKey] : "";
+      if (idValue) {
+        rowObj["id"] = idValue;
         results.push(rowObj);
       }
     }
@@ -329,17 +335,40 @@ export default function ImportPanel() {
       ];
 
       for (const row of parsedRows) {
-        const docRef = doc(db, "evRangeData", row.id);
+        const rowId = row.id || row.ID || row.Id;
+        if (!rowId) continue;
+        const docRef = doc(db, "evRangeData", rowId);
         const dataDoc: Record<string, any> = {
           scrapedAt: new Date().toISOString(),
           sheetType: selectedSheet
         };
 
         Object.keys(row).forEach(k => {
-          if (numericFields.includes(k)) {
-            dataDoc[k] = parseNumeric(row[k]);
+          const val = row[k];
+          const cleanKey = k.toLowerCase().trim().replace(/\s+/g, '_');
+          
+          // Map exact standard keys for UI logic & backend coherence
+          let mappedKey = cleanKey;
+          if (cleanKey === "enine_type" || cleanKey === "enine type" || cleanKey === "engine_type") {
+            mappedKey = "engine";
+          } else if (cleanKey === "tranamission") {
+            mappedKey = "transmission";
+          }
+          
+          // Store both original key (preserving "as it was") and clean normalized key
+          if (numericFields.includes(mappedKey)) {
+            dataDoc[mappedKey] = parseNumeric(val);
           } else {
-            dataDoc[k] = row[k];
+            dataDoc[mappedKey] = val;
+          }
+          
+          // Also keep the original key exactly as it was
+          if (k !== mappedKey) {
+            if (numericFields.includes(k)) {
+              dataDoc[k] = parseNumeric(val);
+            } else {
+              dataDoc[k] = val;
+            }
           }
         });
 
@@ -602,6 +631,7 @@ export default function ImportPanel() {
       </div>
 
       <div className="space-y-1">
+        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 uppercase">Data management</h2>
         <p className="text-zinc-500 text-xs sm:text-sm font-medium">
           Import and update vehicle service schedules, EV range data, or fuel efficiency logs.
         </p>
