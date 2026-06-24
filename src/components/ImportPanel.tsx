@@ -18,6 +18,7 @@ import {
   RefreshCw,
   ExternalLink
 } from "lucide-react";
+import { handleFirestoreError, OperationType } from "../lib/errorHandling";
 import { processJsonImport, ImportMode } from "../lib/importEngine";
 import { useAuth } from "../contexts/AuthContext";
 import { motion, AnimatePresence } from "motion/react";
@@ -62,6 +63,114 @@ export default function ImportPanel() {
   const [selectedSheet, setSelectedSheet] = useState<"ev" | "fuel-efficiency">("ev");
   const [scrapedData, setScrapedData] = useState<any[]>([]);
   const [scrapeResults, setScrapeResults] = useState<any | null>(null);
+
+  // Selection and Deletion States
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    title: string;
+    description: string;
+    warningText?: string;
+    onConfirm: () => Promise<void>;
+  } | null>(null);
+
+  // Clear selections when changing tabs or selected sheet
+  useEffect(() => {
+    setSelectedRowIds([]);
+  }, [selectedSheet, activeTab]);
+
+  // Delete single item from evRangeData
+  const handleDeleteSingle = (id: string) => {
+    setDeleteConfirm({
+      title: "Delete Dataset?",
+      description: `Are you sure you want to permanently delete the cached dataset "${id}" from the database?`,
+      warningText: "This action cannot be undone and will affect future article generation queries for this vehicle.",
+      onConfirm: async () => {
+        setIsDeleting(true);
+        try {
+          const batch = writeBatch(db);
+          batch.delete(doc(db, "evRangeData", id));
+          await batch.commit();
+          setSelectedRowIds(prev => prev.filter(item => item !== id));
+          await loadScrapedData();
+        } catch (err) {
+          console.error("Failed to delete record:", err);
+          try {
+            handleFirestoreError(err, OperationType.DELETE, `evRangeData/${id}`);
+          } catch (firestoreErr: any) {
+            setError(firestoreErr.message || "Failed to delete record.");
+          }
+        } finally {
+          setIsDeleting(false);
+        }
+      }
+    });
+  };
+
+  // Delete multiple selected items
+  const handleDeleteSelected = () => {
+    if (selectedRowIds.length === 0) return;
+    setDeleteConfirm({
+      title: `Delete ${selectedRowIds.length} Selected Datasets?`,
+      description: `Are you sure you want to delete the ${selectedRowIds.length} selected dataset(s)?`,
+      warningText: "This action will permanently remove all selected datasets from Firestore. This cannot be undone.",
+      onConfirm: async () => {
+        setIsDeleting(true);
+        try {
+          const batch = writeBatch(db);
+          selectedRowIds.forEach(id => {
+            batch.delete(doc(db, "evRangeData", id));
+          });
+          await batch.commit();
+          setSelectedRowIds([]);
+          await loadScrapedData();
+        } catch (err) {
+          console.error("Failed to delete selected records:", err);
+          try {
+            handleFirestoreError(err, OperationType.DELETE, "evRangeData/batch");
+          } catch (firestoreErr: any) {
+            setError(firestoreErr.message || "Failed to delete selected records.");
+          }
+        } finally {
+          setIsDeleting(false);
+        }
+      }
+    });
+  };
+
+  // Delete all datasets visible on the current sheet view
+  const handleDeleteAllCurrent = (rowsToClear: any[]) => {
+    if (rowsToClear.length === 0) {
+      return;
+    }
+    const typeLabel = selectedSheet === "ev" ? "EV" : "Fuel-Efficiency";
+    setDeleteConfirm({
+      title: `⚠️ Delete ALL ${typeLabel} Data?`,
+      description: `You are about to permanently delete all ${rowsToClear.length} indexed ${typeLabel} datasets visible on this page.`,
+      warningText: "This will remove all stored metrics for this powertrain category. Are you absolutely certain you want to proceed?",
+      onConfirm: async () => {
+        setIsDeleting(true);
+        try {
+          const batch = writeBatch(db);
+          rowsToClear.forEach(row => {
+            batch.delete(doc(db, "evRangeData", row.id));
+          });
+          await batch.commit();
+          setSelectedRowIds([]);
+          await loadScrapedData();
+        } catch (err) {
+          console.error("Failed to delete all datasets:", err);
+          try {
+            handleFirestoreError(err, OperationType.DELETE, "evRangeData/all");
+          } catch (firestoreErr: any) {
+            setError(firestoreErr.message || "Failed to delete all datasets.");
+          }
+        } finally {
+          setIsDeleting(false);
+        }
+      }
+    });
+  };
 
   // Load scraped models list
   const loadScrapedData = async () => {
@@ -391,43 +500,112 @@ export default function ImportPanel() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-6xl mx-auto space-y-8 animate-fade-in"
+      className="max-w-6xl mx-auto space-y-6 pb-20 animate-fade-in"
     >
-      <header className="flex flex-col sm:flex-row justify-between items-start gap-4">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 uppercase">Data Orchestration</h2>
-          <p className="text-slate-500 text-[10px] md:text-sm font-medium uppercase tracking-widest mt-1">
-            Bulk import maintenance schedules or scrape web-hosted EV range datasets concurrently.
-          </p>
+      <AnimatePresence>
+        {deleteConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { if (!isDeleting) setDeleteConfirm(null); }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden p-8 text-center text-slate-800"
+            >
+              <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-100">
+                <Trash2 size={32} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-950 mb-2 uppercase tracking-tight">
+                {deleteConfirm.title}
+              </h3>
+              <p className="text-sm text-slate-600 mb-4 font-medium sm:px-4">
+                {deleteConfirm.description}
+              </p>
+              {deleteConfirm.warningText && (
+                <div className="mb-6 p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-800 text-left flex gap-2">
+                  <span className="font-extrabold uppercase shrink-0">Note:</span>
+                  <span className="font-medium">{deleteConfirm.warningText}</span>
+                </div>
+              )}
+              
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirm(null)}
+                  disabled={isDeleting}
+                  className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 bg-white border border-slate-200 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await deleteConfirm.onConfirm();
+                    setDeleteConfirm(null);
+                  }}
+                  disabled={isDeleting}
+                  className="flex-1 py-2.5 bg-red-650 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 shadow-lg shadow-red-200 flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    "Confirm Delete"
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200/80 pb-6">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse shadow-sm shadow-yellow-400/50" />
+          <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-zinc-400">Database Tools</span>
         </div>
 
-        {/* Dynamic Navigation Tabs */}
-        <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 self-stretch sm:self-auto">
+        {/* Custom Navigation Tabs */}
+        <div className="flex bg-zinc-100 p-1.5 rounded-2xl border border-zinc-200/80 shadow-inner">
           <button 
             onClick={() => { setActiveTab("json"); setError(null); }}
             className={cn(
-              "flex-1 sm:flex-initial px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all",
+              "px-5 py-2.5 text-[10px] font-extrabold uppercase tracking-widest rounded-xl transition-all duration-200",
               activeTab === "json" 
-                ? "bg-slate-900 text-white shadow-md" 
-                : "text-slate-500 hover:text-slate-950"
+                ? "bg-black text-white shadow-lg shadow-black/10 active:scale-95" 
+                : "text-zinc-500 hover:text-zinc-900"
             )}
           >
-            JSON Files Upload
+            Upload Data Files
           </button>
           <button 
             onClick={() => { setActiveTab("sheet"); setError(null); }}
             className={cn(
-              "flex-1 sm:flex-initial px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5",
+              "px-5 py-2.5 text-[10px] font-extrabold uppercase tracking-widest rounded-xl duration-200 flex items-center gap-1.5 transition-all",
               activeTab === "sheet" 
-                ? "bg-slate-900 text-white shadow-md" 
-                : "text-slate-500 hover:text-slate-950"
+                ? "bg-black text-white shadow-lg shadow-black/10 active:scale-95" 
+                : "text-zinc-500 hover:text-zinc-900"
             )}
           >
-            <Database size={13} />
-            EV Sheet Scraper
+            <Database size={12} className={cn(activeTab === "sheet" ? "text-yellow-400" : "text-zinc-400")} />
+            Online Sheet Scraper
           </button>
         </div>
-      </header>
+      </div>
+
+      <div className="space-y-1">
+        <p className="text-zinc-500 text-xs sm:text-sm font-medium">
+          Import and update vehicle service schedules, EV range data, or fuel efficiency logs.
+        </p>
+      </div>
 
       {/* ERROR MSG BANNER */}
       {error && (
@@ -452,18 +630,18 @@ export default function ImportPanel() {
                 }
               }}
               className={cn(
-                "border-2 border-dashed rounded-3xl p-24 flex flex-col items-center justify-center space-y-5 transition-all duration-300 shadow-sm",
-                isDragging ? "bg-blue-50/50 border-blue-400 scale-[1.01]" : "bg-white border-slate-200 hover:border-slate-300"
+                "border-2 border-dashed rounded-[24px] p-24 flex flex-col items-center justify-center space-y-5 transition-all duration-300 shadow-sm",
+                isDragging ? "bg-amber-50/20 border-yellow-400 scale-[1.01]" : "bg-white border-zinc-200 hover:border-yellow-400"
               )}
             >
-              <div className="w-20 h-20 rounded-full bg-blue-50/70 flex items-center justify-center text-blue-600 shadow-inner">
+              <div className="w-20 h-20 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center text-yellow-500 shadow-inner">
                 <Upload size={32} className={isDragging ? "animate-bounce" : ""} />
               </div>
               <div className="text-center space-y-1">
-                <h3 className="font-extrabold text-slate-900 uppercase tracking-tight text-base">Drop JSON Datasets here</h3>
-                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Drag and drop multiple files, or browse folders</p>
+                <h3 className="font-extrabold text-zinc-900 uppercase tracking-tight text-base">Drop JSON Datasets here</h3>
+                <p className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Drag and drop multiple files, or browse folders</p>
               </div>
-              <label className="cursor-pointer px-10 py-3 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-extrabold uppercase tracking-widest rounded-xl shadow-lg transition-transform active:scale-[0.98] select-none">
+              <label className="cursor-pointer px-10 py-3 bg-black hover:bg-zinc-800 text-white text-[11px] font-extrabold uppercase tracking-widest rounded-xl shadow-lg shadow-black/10 transition-transform active:scale-[0.98] select-none">
                 Choose JSON Files
                 <input type="file" className="hidden" accept=".json" multiple onChange={handleFileUpload} />
               </label>
@@ -475,21 +653,21 @@ export default function ImportPanel() {
               
               {/* LEFT: FILES QUEUE OR DROP MORE ZONE */}
               <div className="md:col-span-7 space-y-6">
-                <div className="tech-card overflow-hidden">
-                  <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-                      <Files size={14} className="text-blue-500" /> 
+                <div className="bg-white border border-zinc-200/80 rounded-[24px] shadow-sm overflow-hidden">
+                  <div className="p-4 bg-zinc-50 border-b border-zinc-200/80 flex justify-between items-center">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-650 flex items-center gap-2">
+                      <Files size={14} className="text-yellow-500" /> 
                       Upload Queue ({uploadedFiles.length} {uploadedFiles.length === 1 ? "File" : "Files"})
                     </h3>
                     <button 
                       onClick={() => setUploadedFiles([])}
-                      className="text-slate-400 hover:text-red-500 text-[10px] uppercase font-bold tracking-widest transition-colors flex items-center gap-1"
+                      className="text-zinc-400 hover:text-red-500 text-[10px] uppercase font-bold tracking-widest transition-colors flex items-center gap-1"
                     >
                       <Trash2 size={12} /> Clear Queue
                     </button>
                   </div>
 
-                  <div className="divide-y divide-slate-100 max-h-[360px] overflow-y-auto">
+                  <div className="divide-y divide-zinc-100 max-h-[360px] overflow-y-auto">
                     <AnimatePresence initial={false}>
                       {uploadedFiles.map((file) => (
                         <motion.div 
@@ -497,18 +675,18 @@ export default function ImportPanel() {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors"
+                          className="p-4 flex items-center justify-between hover:bg-zinc-50/30 transition-colors"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className={cn(
-                              "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
-                              file.status === "validated" ? "bg-blue-50 text-blue-600" : "bg-red-50 text-red-500"
+                              "w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border",
+                              file.status === "validated" ? "bg-amber-50/40 border-amber-100 text-yellow-600" : "bg-red-50 border-red-100 text-red-500"
                             )}>
                               <FileJson size={20} />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-bold text-slate-900 truncate uppercase tracking-tight">{file.name}</p>
-                              <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
+                              <p className="text-sm font-bold text-zinc-900 truncate uppercase tracking-tight">{file.name}</p>
+                              <div className="flex items-center gap-2 text-[10px] text-zinc-400 font-mono mt-0.5">
                                 <span>{formatSize(file.size)}</span>
                                 <span>•</span>
                                 {file.status === "validated" ? (
@@ -522,7 +700,7 @@ export default function ImportPanel() {
 
                           <button 
                             onClick={() => removeFile(file.name)}
-                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-zinc-100 rounded-lg transition-colors"
                           >
                             <X size={14} />
                           </button>
@@ -532,10 +710,10 @@ export default function ImportPanel() {
                   </div>
                 </div>
 
-                <div className="relative">
-                  <label className="border border-dashed border-slate-300 hover:border-slate-400 bg-white/50 hover:bg-white rounded-2xl p-5 flex items-center justify-center gap-2 cursor-pointer transition-all duration-200">
-                    <FolderPlus size={16} className="text-slate-400" />
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Add more JSON datasets</span>
+                <div className="relative animate-fade-in">
+                  <label className="border border-dashed border-zinc-200 hover:border-yellow-400 bg-white hover:bg-zinc-50/5 rounded-2xl p-5 flex items-center justify-center gap-2 cursor-pointer transition-all duration-200">
+                    <FolderPlus size={16} className="text-zinc-450" />
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Add more JSON datasets</span>
                     <input type="file" className="hidden" accept=".json" multiple onChange={handleFileUpload} />
                   </label>
                 </div>
@@ -543,65 +721,65 @@ export default function ImportPanel() {
 
               {/* RIGHT: BULK ACTIONS CARD */}
               <div className="md:col-span-5 space-y-6">
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden text-white flex flex-col">
-                  <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-500 font-mono italic">batch_orchestrator.rs</span>
-                    <div className="flex gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full bg-red-500/30"></div>
-                      <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                <div className="bg-white border border-zinc-200/80 rounded-[24px] shadow-xl shadow-zinc-200/30 overflow-hidden text-zinc-950 flex flex-col">
+                  <div className="p-4 bg-zinc-50 border-b border-zinc-200/80 flex items-center justify-between">
+                    <span className="text-[10px] text-zinc-400 uppercase font-extrabold tracking-widest">Import Settings</span>
+                    <div className="flex gap-1.5 items-center">
+                      <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Active</span>
                     </div>
                   </div>
 
                   <div className="p-6 space-y-6">
                     <div>
-                      <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aggregate Payload</h4>
+                      <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">Selected Data Summary</h4>
                       <div className="mt-2 grid grid-cols-2 gap-4">
-                        <div className="p-3 bg-white/5 border border-white/10 rounded-xl">
-                          <p className="text-[9px] text-white/40 uppercase font-mono">Files Count</p>
-                          <p className="text-2xl font-bold font-mono text-blue-400">{validFiles.length}</p>
+                        <div className="p-3 bg-zinc-50 border border-zinc-200/60 rounded-xl">
+                          <p className="text-[9px] text-zinc-400 uppercase font-bold tracking-wider">Files Selected</p>
+                          <p className="text-2xl font-bold font-mono text-zinc-950">{validFiles.length}</p>
                         </div>
-                        <div className="p-3 bg-white/5 border border-white/10 rounded-xl">
-                          <p className="text-[9px] text-white/40 uppercase font-mono">Total Records</p>
-                          <p className="text-2xl font-bold font-mono text-emerald-400">{aggregatedContent.length}</p>
+                        <div className="p-3 bg-zinc-50 border border-zinc-200/60 rounded-xl">
+                          <p className="text-[9px] text-zinc-400 uppercase font-bold tracking-wider">Total Items</p>
+                          <p className="text-2xl font-bold font-mono text-zinc-950">{aggregatedContent.length}</p>
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Synchronization Mode</label>
-                      <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">How to handle existing data</label>
+                      <div className="space-y-1.5">
                         {(["replace", "merge", "skip"] as const).map(mode => (
                           <button 
                             key={mode} 
                             onClick={() => setImportMode(mode)}
                             disabled={isProcessing}
                             className={cn(
-                              "w-full text-left p-3.5 rounded-xl transition-all text-xs font-bold uppercase tracking-widest flex items-center justify-between",
+                              "w-full text-left p-3 rounded-xl transition-all text-xs font-bold uppercase tracking-widest flex items-center justify-between cursor-pointer border",
                               importMode === mode 
-                                ? "bg-blue-600 text-white shadow-lg shadow-blue-900/40 border-l-4 border-white" 
-                                : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200"
+                                ? "bg-black text-white border-black shadow-lg" 
+                                : "bg-zinc-50 text-zinc-500 border-zinc-250/50 hover:bg-zinc-100 hover:text-zinc-800"
                             )}
                           >
-                            <span>{mode} existing data</span>
-                            <ChevronRight size={14} className={importMode === mode ? "text-white" : "text-slate-600"} />
+                            <span>{mode} existing records</span>
+                            <ChevronRight size={14} className={importMode === mode ? "text-yellow-400" : "text-zinc-350"} />
                           </button>
                         ))}
                       </div>
                     </div>
 
                     {isProcessing && (
-                      <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-2">
+                      <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200/60 space-y-3">
                         <div className="flex items-center gap-2">
-                          <Loader2 size={14} className="animate-spin text-blue-400" />
-                          <span className="text-[10px] font-mono text-slate-300">Processing queue...</span>
+                          <Loader2 size={14} className="animate-spin text-yellow-500" />
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Processing queue...</span>
                         </div>
-                        <div className="text-[9px] font-mono text-slate-400 truncate">
+                        <div className="text-[10px] text-zinc-650 truncate font-mono">
                           File {processedFileCount} of {validFiles.length}: 
-                          <span className="text-white ml-1 font-bold">{activeImportingFile}</span>
+                          <span className="text-zinc-950 ml-1 font-bold">{activeImportingFile}</span>
                         </div>
-                        <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                        <div className="w-full bg-zinc-200/60 h-1.5 rounded-full overflow-hidden">
                           <div 
-                            className="bg-blue-500 h-full transition-all duration-300"
+                            className="bg-yellow-400 h-full transition-all duration-300"
                             style={{ width: `${(processedFileCount / validFiles.length) * 100}%` }}
                           ></div>
                         </div>
@@ -611,9 +789,9 @@ export default function ImportPanel() {
                     <button 
                       onClick={handleImport}
                       disabled={isProcessing || validFiles.length === 0}
-                      className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-xl text-xs transition-all uppercase tracking-[0.2em] shadow-lg shadow-blue-900/20 disabled:opacity-40 disabled:grayscale"
+                      className="w-full py-4 bg-black hover:bg-zinc-850 text-white font-extrabold rounded-xl text-xs transition-all uppercase tracking-[0.2em] shadow-lg shadow-black/10 disabled:opacity-40 select-none cursor-pointer"
                     >
-                      {isProcessing ? "Executing Injections..." : "Start Batch Import"}
+                      {isProcessing ? "Processing Import..." : "Import Datasets"}
                     </button>
                   </div>
                 </div>
@@ -622,31 +800,31 @@ export default function ImportPanel() {
               {/* LOWER VALUE PREVIEW TABLE */}
               {aggregatedContent.length > 0 && (
                 <div className="md:col-span-12 space-y-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2 px-1">
-                    <FileText size={14} /> Comprehensive Queue Preview ({aggregatedContent.length} Rows)
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-2 px-1">
+                    <FileText size={14} className="text-yellow-500" /> Comprehensive Queue Preview ({aggregatedContent.length} Rows)
                   </h3>
-                  <div className="tech-card overflow-hidden">
+                  <div className="bg-white border border-zinc-200/80 rounded-[24px] shadow-sm overflow-hidden">
                     <div className="overflow-x-auto max-h-[300px]">
                       <table className="w-full text-left border-collapse">
-                        <thead className="tech-table-header sticky top-0 bg-slate-50 border-b border-slate-100">
+                        <thead className="sticky top-0 bg-zinc-50 border-b border-zinc-200/60 z-10 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
                           <tr>
                             <th className="px-5 py-3">Vehicle / Brand</th>
                             <th className="px-5 py-3">Model</th>
                             <th className="px-5 py-3">Powertrain Package</th>
-                            <th className="px-5 py-3">Source Dataset File</th>
+                            <th className="px-5 py-3 col-span-2">Source Dataset File</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 text-xs">
+                        <tbody className="divide-y divide-zinc-100 text-xs">
                           {aggregatedContent.slice(0, 50).map((row, i) => (
-                            <tr key={i} className="hover:bg-slate-50/40 transition-colors">
-                              <td className="px-5 py-3 font-bold uppercase tracking-tight text-slate-900">{row.brand}</td>
-                              <td className="px-5 py-3 font-semibold uppercase text-slate-700">{row.model}</td>
+                            <tr key={i} className="hover:bg-zinc-50/20 transition-colors">
+                              <td className="px-5 py-3 font-bold uppercase tracking-tight text-zinc-900">{row.brand}</td>
+                              <td className="px-5 py-3 font-semibold uppercase text-zinc-700">{row.model}</td>
                               <td className="px-5 py-3">
-                                <span className="px-2 py-0.5 bg-blue-50 text-blue-600 font-extrabold rounded uppercase text-[9px]">
+                                <span className="px-2.5 py-0.5 bg-yellow-50 text-amber-800 font-extrabold rounded uppercase text-[9px] border border-yellow-100">
                                   {typeof row.powertrain === 'object' ? (row.powertrain?.name || row.powertrain?.engine || 'Set') : (row.powertrain || "Standard")}
                                 </span>
                               </td>
-                              <td className="px-5 py-3 text-slate-400 font-mono text-[10px] uppercase">{row._fileName || "Direct Input"}</td>
+                              <td className="px-5 py-3 text-zinc-400 font-mono text-[10px] uppercase">{row._fileName || "Direct Input"}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -702,30 +880,30 @@ export default function ImportPanel() {
 
       {/* TAB 2: GOOGLE SHEETS IMMERSIVE SCRAPER */}
       {activeTab === "sheet" && (
-        <div className="space-y-8">
+        <div className="space-y-8 animate-fade-in">
           
           {/* MAIN PROMPT REFERENCE AND SCRAPER CONTROL ACTION CARD */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-2 space-y-6">
-              <div className="bg-white border border-slate-200 p-8 rounded-3xl shadow-sm space-y-6">
+              <div className="bg-white border border-zinc-200/80 p-8 rounded-[24px] shadow-sm shadow-zinc-150 space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div className="flex items-center gap-3 text-blue-600">
+                  <div className="flex items-center gap-3 text-yellow-600">
                     <Globe size={24} />
-                    <h3 className="text-lg font-bold uppercase tracking-tighter text-slate-900">Google Drive Sheets Scraper</h3>
+                    <h3 className="text-lg font-bold uppercase tracking-tighter text-zinc-950">Online Google Sheets Scraper</h3>
                   </div>
                 </div>
 
                 {/* Sheet Selection Selector */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">Select Spreadsheet Tab to Scrape</label>
-                  <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-fit">
+                  <label className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 block">Select Spreadsheet Tab to Scrape</label>
+                  <div className="flex bg-zinc-100 p-1.5 rounded-2xl border border-zinc-200/80 w-full sm:w-fit shadow-inner">
                     <button
                       onClick={() => { setSelectedSheet("ev"); setScrapeResults(null); }}
                       className={cn(
-                        "flex-1 sm:flex-initial px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all",
+                        "px-5 py-2.5 text-[10px] font-extrabold uppercase tracking-widest rounded-xl transition-all duration-200",
                         selectedSheet === "ev"
-                          ? "bg-slate-900 text-white shadow-md"
-                          : "text-slate-500 hover:text-slate-950"
+                          ? "bg-black text-white shadow-md active:scale-95"
+                          : "text-zinc-500 hover:text-zinc-950"
                       )}
                     >
                       EV Range (Sheet 1)
@@ -733,10 +911,10 @@ export default function ImportPanel() {
                     <button
                       onClick={() => { setSelectedSheet("fuel-efficiency"); setScrapeResults(null); }}
                       className={cn(
-                        "flex-1 sm:flex-initial px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all",
+                        "px-5 py-2.5 text-[10px] font-extrabold uppercase tracking-widest rounded-xl transition-all duration-200",
                         selectedSheet === "fuel-efficiency"
-                          ? "bg-slate-900 text-white shadow-md"
-                          : "text-slate-500 hover:text-slate-950"
+                          ? "bg-black text-white shadow-md active:scale-95"
+                          : "text-zinc-500 hover:text-zinc-950"
                       )}
                     >
                       Fuel Efficiency (Sheet 2)
@@ -744,7 +922,7 @@ export default function ImportPanel() {
                   </div>
                 </div>
 
-                <p className="text-sm text-slate-500 leading-relaxed">
+                <p className="text-sm text-zinc-500 leading-relaxed font-medium">
                   {selectedSheet === "ev" 
                     ? "Connects directly to the public Google Sheet containing live real-world EV city and highway range tests. Performs fully automated structure mapping, sanitizes numeric values, and stores them securely."
                     : "Connects directly to the public Google Sheet containing live real-world ICE/Fuel city and highway range tests. Performs fully automated structure mapping, sanitizes numeric values, and stores them securely."
@@ -752,26 +930,26 @@ export default function ImportPanel() {
                 </p>
 
                 {/* Spreadsheet Details */}
-                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-semibold uppercase tracking-wider space-y-2 text-slate-600">
+                <div className="p-5 bg-zinc-50 rounded-2xl border border-zinc-200/60 text-xs font-semibold uppercase tracking-wider space-y-2.5 text-zinc-650">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-mono">Dataset Name:</span>
-                    <span className="text-slate-900 font-bold">{selectedSheet === "ev" ? "EVRange" : "FuelEfficiency"}</span>
+                    <span className="text-zinc-400 font-bold uppercase text-[10px]">Dataset Category:</span>
+                    <span className="text-zinc-900 font-extrabold">{selectedSheet === "ev" ? "EV Range Tests" : "Fuel Efficiency Log"}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-mono">Sheet Table Name:</span>
-                    <span className="text-slate-900 font-bold">{selectedSheet === "ev" ? "ev" : "fuel-efficiency"}</span>
+                    <span className="text-zinc-400 font-bold uppercase text-[10px]">Table Name:</span>
+                    <span className="text-zinc-900 font-mono font-bold">{selectedSheet === "ev" ? "evRangeData" : "fuelEfficiencyData"}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-mono">Public Source URL:</span>
+                    <span className="text-zinc-400 font-bold uppercase text-[10px]">Source Spreadsheet:</span>
                     <a 
                       href={selectedSheet === "ev" 
                         ? "https://docs.google.com/spreadsheets/d/1ha8jW02Ox0ObFwR2q-GIShk7WbxE8bDoRFsLCsCr--o/edit?gid=0#gid=0"
                         : "https://docs.google.com/spreadsheets/d/1ha8jW02Ox0ObFwR2q-GIShk7WbxE8bDoRFsLCsCr--o/edit#gid=1384738472"}
                       target="_blank" 
                       rel="noreferrer"
-                      className="text-blue-600 hover:text-blue-800 underline truncate flex items-center gap-1 font-mono hover:scale-100 transition-transform"
+                      className="text-amber-600 hover:text-amber-800 underline truncate flex items-center gap-1 font-semibold hover:scale-100 transition-transform"
                     >
-                      docs.google.com/spreadsheets/d/1ha8j...
+                      Google Sheet Exporter
                       <ExternalLink size={12} />
                     </a>
                   </div>
@@ -781,23 +959,23 @@ export default function ImportPanel() {
                   <button
                     onClick={handleScrapeSheet}
                     disabled={isScraping}
-                    className="flex-1 py-4 px-8 bg-blue-600 hover:bg-blue-500 text-white font-extrabold uppercase tracking-widest rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex-1 py-4 px-8 bg-black hover:bg-zinc-855 text-white font-extrabold uppercase tracking-widest rounded-xl text-xs transition-all shadow-lg shadow-black/10 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer select-none"
                   >
                     {isScraping ? (
                       <>
-                        <Loader2 className="animate-spin" size={16} />
+                        <Loader2 className="animate-spin text-yellow-400" size={16} />
                         Scraping Live Spreadsheet...
                       </>
                     ) : (
                       <>
-                        <RefreshCw size={14} className={isScraping ? "animate-spin" : ""} />
+                        <RefreshCw size={14} />
                         Scrape All Data in One Click
                       </>
                     )}
                   </button>
                   
                   {scrapedData.length > 0 && (
-                    <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-850 rounded-xl text-[10px] font-mono font-bold uppercase tracking-widest flex items-center justify-center text-center">
+                    <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center text-center">
                       {scrapedData.filter(row => selectedSheet === "ev" ? (row.sheetType === "ev" || (!row.sheetType && !row.fuel_type)) : (row.sheetType === "fuel-efficiency" || row.fuel_type !== undefined)).length} Datasets Indexed ({selectedSheet === "ev" ? "EV" : "Fuel"})
                     </div>
                   )}
@@ -807,31 +985,27 @@ export default function ImportPanel() {
 
             {/* SCRAPE STATUS & LOGS SIDE PANEL */}
             <div className="space-y-6">
-              <div className="bg-slate-900 text-white rounded-3xl p-6 border border-slate-800 shadow-xl space-y-4">
+              <div className="bg-zinc-950 text-zinc-350 rounded-[24px] p-6 border border-zinc-800 shadow-xl space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-slate-500">terminal // logs.stdout</span>
-                  <div className="flex gap-1">
-                    <div className="w-2.5 h-2.5 rounded-full bg-slate-800"></div>
-                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
-                  </div>
+                  <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Scraper Engine Console</span>
+                  <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse shadow-sm shadow-yellow-400/50" />
                 </div>
 
-                <div className="font-mono text-[10px] text-slate-400 space-y-2 leading-relaxed h-[180px] overflow-y-auto bg-black/40 p-4 rounded-xl border border-white/5">
-                  <p className="text-blue-400 font-bold">[SYSTEM] Scraper Engine boot successful.</p>
-                  <p className="text-slate-500">&gt; Loaded google sheet public exporter module</p>
+                <div className="font-mono text-[10px] text-zinc-400 space-y-2.5 leading-relaxed h-[180px] overflow-y-auto bg-black/40 p-4 rounded-xl border border-zinc-900">
+                  <p className="text-zinc-500 border-l-2 border-yellow-500 pl-2">[SYSTEM] Scraper Engine active.</p>
+                  <p className="text-zinc-650">&gt; Loaded public sheet importer utility</p>
                   {isScraping && (
-                    <p className="text-amber-400 animate-pulse">[PROCESSING] Fetching live CSV from Google Drive...</p>
+                    <p className="text-yellow-400 animate-pulse">[PROCESSING] Fetching live rows from Google Drive...</p>
                   )}
                   {scrapeResults && (
                     <>
                       <p className="text-emerald-400 font-bold">[SUCCESS] Scraping completed at {scrapeResults.timestamp}!</p>
-                      <p className="text-slate-300">&gt; Parsed {scrapeResults.count} records correctly.</p>
-                      <p className="text-slate-300">&gt; Document IDs stored: EV001 - EV009.</p>
-                      <p className="text-slate-300">&gt; Multi-sync is fully ready.</p>
+                      <p className="text-zinc-500">&gt; Parsed {scrapeResults.count} records correctly.</p>
+                      <p className="text-zinc-500">&gt; Ready for article content generation.</p>
                     </>
                   )}
                   {!isScraping && !scrapeResults && (
-                    <p className="text-slate-600">[IDLE] Press standard button to initiate synchronization.</p>
+                    <p className="text-zinc-600">[READY] Click scrape button to initiate synchronization.</p>
                   )}
                 </div>
               </div>
@@ -839,84 +1013,201 @@ export default function ImportPanel() {
           </div>
 
           {/* REAL PREVIEW OF SYNCED SYSTEM MODELS */}
-          {scrapedData.length > 0 && (
-            <div className="space-y-4 animate-fade-in">
-              <div className="flex justify-between items-center px-1">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-                  <Database size={15} className="text-blue-500" />
-                  Synced {selectedSheet === "ev" ? "EV" : "Fuel-Efficiency"} Database {selectedSheet === "ev" ? "Models" : "Vehicles"} (evRangeData in Firestore)
-                </h3>
-                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest font-mono">
-                  Press Scrape data to refresh anytime
-                </span>
-              </div>
+          {(() => {
+            const currentFilteredRows = scrapedData
+              .filter(row => selectedSheet === "ev" ? (row.sheetType === "ev" || (!row.sheetType && !row.fuel_type)) : (row.sheetType === "fuel-efficiency" || row.fuel_type !== undefined))
+              .sort((a,b) => (a.rank || 0) - (b.rank || 0));
 
-              <div className="tech-card overflow-hidden">
-                <div className="overflow-x-auto max-h-[400px]">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="tech-table-header sticky top-0 bg-slate-50 border-b border-slate-100">
-                      {selectedSheet === "ev" ? (
-                        <tr>
-                          <th className="px-5 py-3">Rank</th>
-                          <th className="px-5 py-3">ID</th>
-                          <th className="px-5 py-3">Brand</th>
-                          <th className="px-5 py-3">Vehicle Model</th>
-                          <th className="px-5 py-3">Battery Size (kWh)</th>
-                          <th className="px-5 py-3">Claimed Range</th>
-                          <th className="px-5 py-3">Real Range</th>
-                          <th className="px-5 py-3">Tested Year</th>
-                        </tr>
-                      ) : (
-                        <tr>
-                          <th className="px-5 py-3">Rank</th>
-                          <th className="px-5 py-3">ID</th>
-                          <th className="px-5 py-3">Brand</th>
-                          <th className="px-5 py-3">Vehicle Model</th>
-                          <th className="px-5 py-3">Fuel Type</th>
-                          <th className="px-5 py-3">Engine</th>
-                          <th className="px-5 py-3">Transmission</th>
-                          <th className="px-5 py-3">Claimed Mileage</th>
-                          <th className="px-5 py-3">Real Mileage</th>
-                          <th className="px-5 py-3">Tested Year</th>
-                        </tr>
-                      )}
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
-                      {scrapedData
-                        .filter(row => selectedSheet === "ev" ? (row.sheetType === "ev" || (!row.sheetType && !row.fuel_type)) : (row.sheetType === "fuel-efficiency" || row.fuel_type !== undefined))
-                        .sort((a,b) => (a.rank || 0) - (b.rank || 0))
-                        .map((row) => (
-                          <tr key={row.id} className="hover:bg-slate-50/40 transition-colors">
-                            <td className="px-5 py-3 font-mono font-bold text-slate-400">#{row.rank || "—"}</td>
-                            <td className="px-5 py-3 font-mono font-bold text-blue-600 uppercase text-[11px]">{row.id}</td>
-                            <td className="px-5 py-3 font-bold text-slate-900">{row.brand || "—"}</td>
-                            <td className="px-5 py-3 font-semibold text-slate-700 uppercase">
-                              {row.model || "—"} {row.variant ? <span className="text-[10px] text-slate-400 font-normal uppercase">({row.variant})</span> : ""}
-                            </td>
-                            {selectedSheet === "ev" ? (
-                              <>
-                                <td className="px-5 py-3 font-mono font-bold text-amber-600">{row.battery_kwh || "—"} kWh</td>
-                                <td className="px-5 py-3 font-mono font-bold text-emerald-600">{row.claimed_range_km || "—"} km</td>
-                                <td className="px-5 py-3 font-mono font-bold text-indigo-600">{row.real_range_km || "—"} km</td>
-                              </>
-                            ) : (
-                              <>
-                                <td className="px-5 py-3 font-bold text-amber-700 capitalize">{row.fuel_type || "—"}</td>
-                                <td className="px-5 py-3 font-mono font-semibold text-slate-500">{row.engine || "—"}</td>
-                                <td className="px-5 py-3 font-bold text-slate-600 uppercase text-[11px]">{row.transmission || "—"}</td>
-                                <td className="px-5 py-3 font-mono font-bold text-emerald-600">{row.claimed_mileage_kmpl || "—"} kmpl</td>
-                                <td className="px-5 py-3 font-mono font-bold text-indigo-600">{row.real_mileage_kmpl || "—"} kmpl</td>
-                              </>
-                            )}
-                            <td className="px-5 py-3 text-slate-400 font-mono">{row.test_year || "—"}</td>
+            const isAllSelected = currentFilteredRows.length > 0 && currentFilteredRows.every(row => selectedRowIds.includes(row.id));
+
+            const handleToggleSelectAll = () => {
+              if (isAllSelected) {
+                // Deselect all on current sheet
+                const leftOver = selectedRowIds.filter(id => !currentFilteredRows.some(row => row.id === id));
+                setSelectedRowIds(leftOver);
+              } else {
+                // Select all on current sheet
+                const combined = Array.from(new Set([...selectedRowIds, ...currentFilteredRows.map(row => row.id)]));
+                setSelectedRowIds(combined);
+              }
+            };
+
+            const handleToggleSelectRow = (id: string) => {
+              if (selectedRowIds.includes(id)) {
+                setSelectedRowIds(prev => prev.filter(item => item !== id));
+              } else {
+                setSelectedRowIds(prev => [...prev, id]);
+              }
+            };
+
+            if (scrapedData.length === 0) return null;
+
+            return (
+              <div className="space-y-4 animate-fade-in text-zinc-700">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-1 pb-2">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-xs font-extrabold uppercase tracking-widest text-zinc-800 flex items-center gap-2">
+                      <Database size={15} className="text-yellow-500" />
+                      Synced {selectedSheet === "ev" ? "EV" : "Fuel-Efficiency"} Database {selectedSheet === "ev" ? "Models" : "Vehicles"}
+                    </h3>
+                    <span className="p-1 px-2.5 bg-zinc-100 border border-zinc-200/60 rounded-full text-[9px] font-bold text-zinc-650 uppercase font-mono tracking-wider">
+                      Total: {currentFilteredRows.length}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 self-end sm:self-auto">
+                    {currentFilteredRows.length > 0 && (
+                      <button
+                        onClick={() => handleDeleteAllCurrent(currentFilteredRows)}
+                        disabled={isDeleting}
+                        className="px-3.5 py-1.5 text-[10px] uppercase tracking-widest font-extrabold text-red-650 bg-red-50 hover:bg-red-100/80 border border-red-200/70 rounded-xl transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                        title={`Clear all ${selectedSheet === "ev" ? "EV" : "Fuel"} datasets`}
+                      >
+                        <Trash2 size={12} className="text-red-500" />
+                        Delete All {selectedSheet === "ev" ? "EV" : "Fuel"} Data
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Bulk Actions Bar */}
+                <AnimatePresence>
+                  {selectedRowIds.length > 0 && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="flex flex-wrap items-center justify-between gap-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse"></div>
+                        <span className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+                          {selectedRowIds.length} Dataset(s) Selected
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedRowIds([])}
+                          className="px-3 py-1.5 text-[10px] uppercase tracking-wider font-extrabold text-zinc-500 hover:text-zinc-800 bg-white border border-zinc-200 rounded-lg transition-colors cursor-pointer"
+                        >
+                          Clear Selection
+                        </button>
+                        <button
+                          onClick={handleDeleteSelected}
+                          disabled={isDeleting}
+                          className="px-3 py-1.5 text-[10px] uppercase tracking-wider font-extrabold text-white bg-red-600 hover:bg-red-700 rounded-lg flex items-center gap-1.5 transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                        >
+                          <Trash2 size={12} />
+                          Delete Selected
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="bg-white border border-zinc-200/80 rounded-[24px] shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto max-h-[400px]">
+                    <table className="w-full text-left border-collapse">
+                      <thead className="sticky top-0 bg-zinc-50 border-b border-zinc-200/65 z-10 text-[10px] font-extrabold uppercase tracking-wider text-zinc-400">
+                        {selectedSheet === "ev" ? (
+                          <tr>
+                            <th className="px-5 py-3 w-12 text-center">
+                              <input
+                                type="checkbox"
+                                checked={isAllSelected}
+                                onChange={handleToggleSelectAll}
+                                className="w-4 h-4 text-black bg-zinc-100 border-zinc-300 rounded focus:ring-yellow-400 cursor-pointer accent-black"
+                              />
+                            </th>
+                            <th className="px-5 py-3">Rank</th>
+                            <th className="px-5 py-3">ID</th>
+                            <th className="px-5 py-3">Brand</th>
+                            <th className="px-5 py-3">Vehicle Model</th>
+                            <th className="px-5 py-3">Battery Size (kWh)</th>
+                            <th className="px-5 py-3">Claimed Range</th>
+                            <th className="px-5 py-3">Real Range</th>
+                            <th className="px-5 py-3">Tested Year</th>
+                            <th className="px-5 py-3 text-right">Actions</th>
                           </tr>
-                        ))}
-                    </tbody>
-                  </table>
+                        ) : (
+                          <tr>
+                            <th className="px-5 py-3 w-12 text-center">
+                              <input
+                                type="checkbox"
+                                checked={isAllSelected}
+                                onChange={handleToggleSelectAll}
+                                className="w-4 h-4 text-black bg-zinc-100 border-zinc-300 rounded focus:ring-yellow-400 cursor-pointer accent-black"
+                              />
+                            </th>
+                            <th className="px-5 py-3">Rank</th>
+                            <th className="px-5 py-3">ID</th>
+                            <th className="px-5 py-3">Brand</th>
+                            <th className="px-5 py-3">Vehicle Model</th>
+                            <th className="px-5 py-3">Fuel Type</th>
+                            <th className="px-5 py-3">Engine</th>
+                            <th className="px-5 py-3">Transmission</th>
+                            <th className="px-5 py-3">Claimed Mileage</th>
+                            <th className="px-5 py-3">Real Mileage</th>
+                            <th className="px-5 py-3">Tested Year</th>
+                            <th className="px-5 py-3 text-right">Actions</th>
+                          </tr>
+                        )}
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100 text-xs text-zinc-800">
+                        {currentFilteredRows.map((row) => {
+                          const isSelected = selectedRowIds.includes(row.id);
+                          return (
+                            <tr key={row.id} className={cn("hover:bg-zinc-50/20 transition-colors", isSelected && "bg-amber-50/25")}>
+                              <td className="px-5 py-3 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => handleToggleSelectRow(row.id)}
+                                  className="w-4 h-4 text-black bg-zinc-100 border-zinc-300 rounded focus:ring-yellow-400 cursor-pointer accent-black"
+                                />
+                              </td>
+                              <td className="px-5 py-3 font-mono font-bold text-zinc-400">#{row.rank || "—"}</td>
+                              <td className="px-5 py-3 font-mono font-bold text-amber-700 uppercase text-[11px]">{row.id}</td>
+                              <td className="px-5 py-3 font-bold text-zinc-950">{row.brand || "—"}</td>
+                              <td className="px-5 py-3 font-extrabold text-zinc-900 uppercase">
+                                {row.model || "—"} {row.variant ? <span className="text-[10px] text-zinc-400 font-normal uppercase">({row.variant})</span> : ""}
+                              </td>
+                              {selectedSheet === "ev" ? (
+                                <>
+                                  <td className="px-5 py-3 font-mono font-bold text-zinc-800">{row.battery_kwh || "—"} kWh</td>
+                                  <td className="px-5 py-3 font-mono font-bold text-zinc-500">{row.claimed_range_km || "—"} km</td>
+                                  <td className="px-5 py-3 font-mono font-bold text-amber-600">{row.real_range_km || "—"} km</td>
+                                </>
+                              ) : (
+                                <>
+                                  <td className="px-5 py-3 font-extrabold text-zinc-700 capitalize">{row.fuel_type || "—"}</td>
+                                  <td className="px-5 py-3 font-mono font-bold text-zinc-500">{row.engine || "—"}</td>
+                                  <td className="px-5 py-3 font-bold text-zinc-650 uppercase text-[10px]">{row.transmission || "—"}</td>
+                                  <td className="px-5 py-3 font-mono font-bold text-zinc-500">{row.claimed_mileage_kmpl || "—"} kmpl</td>
+                                  <td className="px-5 py-3 font-mono font-bold text-amber-600">{row.real_mileage_kmpl || "—"} kmpl</td>
+                                </>
+                              )}
+                              <td className="px-5 py-3 text-zinc-400 font-mono">{row.test_year || "—"}</td>
+                              <td className="px-5 py-3 text-right">
+                                <button
+                                  onClick={() => handleDeleteSingle(row.id)}
+                                  disabled={isDeleting}
+                                  className="p-1 px-2.5 text-red-650 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors inline-flex items-center gap-1 font-bold text-[10px] uppercase tracking-wider disabled:opacity-40 cursor-pointer"
+                                  title="Delete this entry"
+                                >
+                                  <Trash2 size={12} />
+                                  Delete
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
         </div>
       )}
